@@ -5,4 +5,6 @@ bricks:
 - arduino:video_object_detection: {}
 - arduino:web_ui: {}
 - arduino:dbstorage_sqlstore: {}
+- arduino:audio_classification:
+    model: ei-model-991592-1
 icon: 📽️
