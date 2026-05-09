@@ -1,24 +1,4 @@
 services:
-  ei-audio-classifier-runner:
-    user: 1000:1000
-    group_add:
-    - 44
-    - 29
-    - 991
-    - 20
-    - 1001
-    labels:
-      cc.arduino.app: "true"
-      cc.arduino.app.path: /home/arduino/ArduinoApps/EsparregsBCN
-    environment:
-      APP_HOME: /home/arduino/ArduinoApps/EsparregsBCN
-      BIND_ADDRESS: 127.0.0.1
-      CUSTOM_MODEL_PATH: /home/arduino/.arduino-bricks/models/custom-ei/ei-model-991592-1
-      EI_AUDIO_CLASSIFICATION_MODEL: /home/arduino/.arduino-bricks/models/custom-ei/ei-model-991592-1/model.eim
-      EI_KEYWORD_SPOTTING_MODEL: /home/arduino/.arduino-bricks/models/custom-ei/ei-model-991592-1/model.eim
-      EI_V_OBJ_DETECTION_MODEL: /models/ootb/ei/yolo-x-nano.eim
-      HOST_IP: 10.63.0.144
-      VIDEO_DEVICE: /dev/video0
   ei-video-obj-detection-runner:
     user: 1000:1000
     devices:
@@ -36,13 +16,11 @@ services:
     - 1001
     labels:
       cc.arduino.app: "true"
-      cc.arduino.app.path: /home/arduino/ArduinoApps/prova-de-camara-copia
+      cc.arduino.app.path: /home/arduino/ArduinoApps/EsparregsBCN
     environment:
       APP_HOME: /home/arduino/ArduinoApps/EsparregsBCN
-      BIND_ADDRESS: 127.0.0.1
-      CUSTOM_MODEL_PATH: /home/arduino/.arduino-bricks/models/custom-ei/ei-model-991592-1
-      EI_AUDIO_CLASSIFICATION_MODEL: /home/arduino/.arduino-bricks/models/custom-ei/ei-model-991592-1/model.eim
-      EI_KEYWORD_SPOTTING_MODEL: /home/arduino/.arduino-bricks/models/custom-ei/ei-model-991592-1/model.eim
+      BIND_ADDRESS: 0.0.0.0
+      CUSTOM_MODEL_PATH: /home/arduino/.arduino-bricks/ei-models
       EI_V_OBJ_DETECTION_MODEL: /models/ootb/ei/yolo-x-nano.eim
-      HOST_IP: 10.63.0.144
-      VIDEO_DEVICE: /dev/video0
+      HOST_IP: 10.19.222.97
+      VIDEO_DEVICE: /dev/video2
