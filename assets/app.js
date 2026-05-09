@@ -2,12 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-const recentDetectionsElement = document.getElementById('recentDetections');
-const feedbackContentElement = document.getElementById('feedback-content');
-const MAX_RECENT_SCANS = 5;
-let scans = [];
 const socket = io(`http://${window.location.host}`);
-let errorContainer = document.getElementById('error-container');
 
 const SEVERITY_COLORS = {
     low: { bg: '#e6f4ea', text: '#137333', label: 'Baix' },
@@ -25,7 +20,7 @@ const DENSITY_LABELS = {
 // --- DB FETCH FUNCTIONS ---
 async function fetchEvents() {
     try {
-        const res = await fetch(`http://${window.location.host}/events`);
+        const res = await fetch(`http://${window.location.host}/api/events`);
         const data = await res.json();
         renderEvents(data.events || []);
     } catch (e) {
@@ -33,13 +28,21 @@ async function fetchEvents() {
     }
 }
 
-async function fetchLatest() {
+async function fetchStats() {
     try {
-        const res = await fetch(`http://${window.location.host}/latest`);
+        const res = await fetch(`http://${window.location.host}/api/stats`);
         const data = await res.json();
-        renderLatest(data.latest || {});
+        document.getElementById('total-records').textContent = data.total ?? '—';
+        document.getElementById('max-detected').textContent = data.max_count != null ? data.max_count + ' persones' : '—';
+        if (data.latest && data.latest.density_level) {
+            const density = DENSITY_LABELS[data.latest.density_level] || data.latest.density_level;
+            const densityEl = document.getElementById('current-density');
+            densityEl.textContent = density;
+            densityEl.style.color = data.latest.density_level === 'high' ? '#c5221f' :
+                                     data.latest.density_level === 'medium' ? '#b06000' : '#137333';
+        }
     } catch (e) {
-        console.error('Error fetching latest:', e);
+        console.error('Error fetching stats:', e);
     }
 }
 
@@ -61,49 +64,34 @@ function renderEvents(events) {
         `;
     }).join('');
 
-    // Update last alert stat
     if (events[0]) {
         const time = new Date(events[0].triggered_at).toLocaleTimeString('ca-ES');
-        document.getElementById('last-alert').textContent = time;
+        const lastAlertEl = document.getElementById('last-alert');
         const s = SEVERITY_COLORS[events[0].severity] || SEVERITY_COLORS.low;
-        document.getElementById('last-alert').style.color = s.text;
+        lastAlertEl.textContent = time;
+        lastAlertEl.style.color = s.text;
     }
-
-    document.getElementById('total-records').textContent = events.length;
 }
 
-function renderLatest(latest) {
-    if (!latest || !latest.person_count) return;
-    document.getElementById('max-detected').textContent = latest.person_count + ' persones';
-    const density = DENSITY_LABELS[latest.density_level] || latest.density_level;
-    const densityEl = document.getElementById('current-density');
-    densityEl.textContent = density;
-    densityEl.style.color = latest.density_level === 'high' ? '#c5221f' :
-                             latest.density_level === 'medium' ? '#b06000' : '#137333';
-}
-
-// --- SOCKET ---
+// --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
     initSocketIO();
     fetchEvents();
-    fetchLatest();
-    // Refresh every 30 seconds
+    fetchStats();
     setInterval(fetchEvents, 30000);
-    setInterval(fetchLatest, 30000);
+    setInterval(fetchStats, 30000);
 });
 
+// --- SOCKET ---
 function initSocketIO() {
-    socket.on('update_aforament', async (message) => {
+    socket.on('update_aforament', (message) => {
         const persones = message.aforament;
-
         const statusText = document.getElementById('status-text');
         const personCount = document.getElementById('person-count');
         const timeUpdate = document.getElementById('time-update');
         const liveBar = document.getElementById('live-bar');
 
         personCount.textContent = persones;
-
-        let capacitatMaxima = 10;
 
         if (persones === 0) {
             statusText.textContent = "Buit";
@@ -115,7 +103,7 @@ function initSocketIO() {
             statusText.textContent = "Molt concorregut";
         }
 
-        let percentatge = (persones / capacitatMaxima) * 100;
+        let percentatge = (persones / 10) * 100;
         if (percentatge > 100) percentatge = 100;
         if (percentatge < 5 && persones > 0) percentatge = 5;
         liveBar.style.height = `${percentatge}%`;
@@ -124,12 +112,12 @@ function initSocketIO() {
         timeUpdate.textContent = `Actualitzat a les ${hora}`;
     });
 
-    socket.on('alert', (message) => {
-        // Flash the events panel and refresh
+    socket.on('alert', () => {
         const panel = document.getElementById('events-panel');
         panel.classList.add('alert-flash');
         setTimeout(() => panel.classList.remove('alert-flash'), 1000);
         fetchEvents();
+        fetchStats();
     });
 
     socket.on('connect', () => {

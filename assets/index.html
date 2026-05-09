@@ -58,7 +58,7 @@
                 <div class="container maps-card" id="events-panel">
                     <div class="events-header">
                         <h3 class="secondary-title">⚠️ Alertes de Contaminació</h3>
-                        <button class="refresh-btn" id="refresh-events">↻</button>
+                        <button class="refresh-btn" onclick="fetchEvents()">↻</button>
                     </div>
                     <div id="events-list">
                         <p class="feedback-text">Carregant alertes...</p>
@@ -71,7 +71,7 @@
         <div class="container history-panel">
             <div class="events-header">
                 <h3 class="secondary-title">📊 Historial d'Aforament</h3>
-                <button class="refresh-btn" id="refresh-stats">↻</button>
+                <button class="refresh-btn" onclick="fetchStats()">↻</button>
             </div>
             <div id="history-stats" class="history-stats">
                 <div class="stat-box">
