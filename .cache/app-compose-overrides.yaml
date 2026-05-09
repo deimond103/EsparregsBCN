@@ -36,7 +36,7 @@ services:
     - 1001
     labels:
       cc.arduino.app: "true"
-      cc.arduino.app.path: /home/arduino/ArduinoApps/EsparregsBCN
+      cc.arduino.app.path: /home/arduino/ArduinoApps/prova-de-camara-copia
     environment:
       APP_HOME: /home/arduino/ArduinoApps/EsparregsBCN
       BIND_ADDRESS: 127.0.0.1

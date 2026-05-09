@@ -1,4 +1,4 @@
-name: esparregsbcn
+name: prova-de-camara-copia
 include:
 - /var/lib/arduino-app-cli/assets/0.9.0/compose/arduino/video_object_detection/brick_compose.yaml
 - /var/lib/arduino-app-cli/assets/0.9.0/compose/arduino/audio_classification/brick_compose.yaml
@@ -12,7 +12,7 @@ services:
         condition: service_healthy
     volumes:
     - type: bind
-      source: /home/arduino/ArduinoApps/EsparregsBCN
+      source: /home/arduino/ArduinoApps/prova-de-camara-copia
       target: /app
     - type: bind
       source: /var/run/arduino-router.sock
@@ -63,7 +63,7 @@ services:
     labels:
       cc.arduino.app: "true"
       cc.arduino.app.main: "true"
-      cc.arduino.app.path: /home/arduino/ArduinoApps/EsparregsBCN
+      cc.arduino.app.path: /home/arduino/ArduinoApps/prova-de-camara-copia
     environment:
       APP_HOME: /home/arduino/ArduinoApps/EsparregsBCN
       BIND_ADDRESS: 127.0.0.1
