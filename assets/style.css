@@ -1,34 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap');
-
 body {
     font-family: 'Google Sans', -apple-system, Roboto, sans-serif;
     margin: 0;
     padding: 20px;
-    background-color: #f8f9fa; /* Fons clar */
-    color: #202124; /* Color de lletra Google */
+    background-color: #f8f9fa;
+    color: #202124;
     display: flex;
     justify-content: center;
 }
-
 .app-wrapper {
     width: 100%;
     max-width: 1200px;
 }
-
 .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 24px;
 }
-
 .arduino-text {
-    color: #1a73e8; /* Blau Google */
+    color: #1a73e8;
     font-size: 28px;
     font-weight: 700;
     margin: 0;
 }
-
 .location-badge {
     background: #e8f0fe;
     color: #1a73e8;
@@ -37,40 +32,34 @@ body {
     font-weight: 500;
     font-size: 14px;
 }
-
 .main-content {
     display: flex;
     gap: 24px;
     align-items: stretch;
 }
-
 .container {
     background: #FFF;
     border-radius: 16px;
-    box-shadow: 0 2px 6px rgba(60,64,67,0.15); /* Ombra suau estil targeta */
+    box-shadow: 0 2px 6px rgba(60,64,67,0.15);
     padding: 24px;
     box-sizing: border-box;
 }
-
 #video-container {
     flex-grow: 1.5;
     padding: 0;
     overflow: hidden;
     display: flex;
 }
-
 #videoFeedContainer {
     width: 100%;
     height: 100%;
     background: #000;
 }
-
 #dynamicIframe {
     width: 100%;
     height: 100%;
     min-height: 500px;
 }
-
 .right-column {
     flex-grow: 1;
     display: flex;
@@ -78,53 +67,44 @@ body {
     gap: 24px;
     min-width: 350px;
 }
-
-/* ESTIL GOOGLE MAPS POPULAR TIMES */
 .maps-card {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
-
 .live-indicator {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #fce8e6; /* Fons rosa clar */
+    background: #fce8e6;
     padding: 6px 12px;
     border-radius: 4px;
     width: fit-content;
 }
-
 .pulse-dot {
     width: 8px;
     height: 8px;
-    background-color: #d93025; /* Vermell Google */
+    background-color: #d93025;
     border-radius: 50%;
     animation: pulse 1.5s infinite;
 }
-
 @keyframes pulse {
     0% { box-shadow: 0 0 0 0 rgba(217, 48, 37, 0.4); }
     70% { box-shadow: 0 0 0 10px rgba(217, 48, 37, 0); }
     100% { box-shadow: 0 0 0 0 rgba(217, 48, 37, 0); }
 }
-
 .live-text {
     color: #d93025;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.5px;
 }
-
 .status-text {
     margin: 0;
     font-size: 22px;
     font-weight: 500;
     color: #202124;
 }
-
-/* EL GRÀFIC DE BARRES */
 .popular-times-graph {
     display: flex;
     align-items: flex-end;
@@ -134,13 +114,11 @@ body {
     padding-bottom: 8px;
     margin-top: 16px;
 }
-
 .bg-bar {
     flex-grow: 1;
-    background-color: #e8eaed; /* Gris per les hores "normals" */
+    background-color: #e8eaed;
     border-radius: 4px 4px 0 0;
 }
-
 .live-bar-container {
     flex-grow: 1;
     height: 100%;
@@ -149,55 +127,139 @@ body {
     justify-content: flex-end;
     align-items: center;
 }
-
 .live-value {
     font-size: 11px;
     color: #d93025;
     font-weight: 700;
     margin-bottom: 4px;
 }
-
 .live-bar {
     width: 100%;
-    background-color: #d93025; /* La barra rosa actua */
+    background-color: #d93025;
     border-radius: 4px 4px 0 0;
-    transition: height 0.5s ease-out; /* Animació suau al pujar/baixar */
+    transition: height 0.5s ease-out;
 }
-
-/* FOOTER DADES */
 .stats-footer {
     margin-top: 8px;
 }
-
 .live-count {
     margin: 0;
     font-size: 16px;
     color: #5f6368;
 }
-
 .big-number {
     font-size: 24px;
     font-weight: 700;
     color: #202124;
 }
-
 .time-update {
     margin: 4px 0 0 0;
     font-size: 12px;
     color: #80868b;
 }
-
 .secondary-title {
     margin: 0;
     font-size: 18px;
     color: #202124;
 }
-
 .opacity-50 {
     opacity: 0.6;
+}
+
+/* EVENTS PANEL */
+.events-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.refresh-btn {
+    background: #e8f0fe;
+    border: none;
+    color: #1a73e8;
+    font-size: 18px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.refresh-btn:hover {
+    background: #d2e3fc;
+}
+.event-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f3f4;
+    font-size: 13px;
+}
+.event-row:last-child {
+    border-bottom: none;
+}
+.severity-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 52px;
+    text-align: center;
+}
+.event-detail {
+    flex-grow: 1;
+    color: #202124;
+    font-weight: 500;
+}
+.event-time {
+    color: #80868b;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* HISTORY PANEL */
+.history-panel {
+    margin-top: 24px;
+}
+.history-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+.stat-box {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.stat-label {
+    font-size: 12px;
+    color: #80868b;
+    font-weight: 500;
+}
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #202124;
+}
+
+/* ALERT FLASH */
+@keyframes flashAlert {
+    0% { box-shadow: 0 2px 6px rgba(60,64,67,0.15); }
+    50% { box-shadow: 0 0 0 4px rgba(217, 48, 37, 0.4); }
+    100% { box-shadow: 0 2px 6px rgba(60,64,67,0.15); }
+}
+.alert-flash {
+    animation: flashAlert 1s ease;
 }
 
 @media (max-width: 900px) {
     .main-content { flex-direction: column; }
     #dynamicIframe { min-height: 300px; }
+    .history-stats { grid-template-columns: repeat(2, 1fr); }
 }

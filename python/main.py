@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: Copyright (C) ARDUINO SRL (http://www.arduino.cc)
 #
 # SPDX-License-Identifier: MPL-2.0
-import sqlite3
 import os
+import sqlite3
 from arduino.app_utils import App
 from arduino.app_bricks.web_ui import WebUI
 from arduino.app_bricks.video_objectdetection import VideoObjectDetection
@@ -15,6 +15,7 @@ ui.on_message("override_th", lambda sid, threshold: detection_stream.override_th
 # --- DB SETUP ---
 DB_PATH = "/home/arduino/data/monitoring.db"
 os.makedirs("/home/arduino/data", exist_ok=True)
+
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -40,10 +41,10 @@ def init_db():
     conn.close()
 
 def get_severity(person_count):
-    if person_count >= 4: return "critical"
-    elif person_count >= 3: return "high"
-    elif person_count >= 2: return "medium"
-    elif person_count >= 1: return "low"
+    if person_count >= 75: return "critical"
+    elif person_count >= 51: return "high"
+    elif person_count >= 36: return "medium"
+    elif person_count >= 20: return "low"
     return None
 
 # --- DETECTION CALLBACK ---
@@ -51,7 +52,6 @@ def send_detections_to_ui(detections: dict):
     person_count = len(detections.get("person", []))
     density = "high" if person_count >= 51 else "medium" if person_count >= 20 else "low"
 
-    # Save to DB
     conn = get_db()
     conn.execute("INSERT INTO crowd_readings (person_count, density_level) VALUES (?, ?)",
                  (person_count, density))
@@ -62,7 +62,6 @@ def send_detections_to_ui(detections: dict):
     conn.commit()
     conn.close()
 
-    # Send to WebUI
     entry = {
         "aforament": person_count,
         "timestamp": datetime.now(UTC).isoformat()
@@ -90,8 +89,25 @@ def api_latest():
     conn.close()
     return {"latest": dict(row) if row else {}}
 
+def api_stats():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) as total FROM crowd_readings")
+    total = c.fetchone()["total"]
+    c.execute("SELECT MAX(person_count) as max_count FROM crowd_readings")
+    max_count = c.fetchone()["max_count"]
+    c.execute("SELECT * FROM crowd_readings ORDER BY recorded_at DESC LIMIT 1")
+    latest = c.fetchone()
+    conn.close()
+    return {
+        "total": total,
+        "max_count": max_count or 0,
+        "latest": dict(latest) if latest else {}
+    }
+
 ui.expose_api("GET", "/api/events", api_events)
 ui.expose_api("GET", "/api/latest", api_latest)
+ui.expose_api("GET", "/api/stats", api_stats)
 
 # --- INIT ---
 init_db()
