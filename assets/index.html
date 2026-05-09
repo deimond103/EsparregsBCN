@@ -1,118 +1,85 @@
-º<!--
-SPDX-FileCopyrightText: Copyright (C) ARDUINO SRL (http://www.arduino.cc)
-
-SPDX-License-Identifier: MPL-2.0
--->
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ca">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Generic Object Detection</title>
+    <title>Street Listener - Aforament</title>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-    <div>
+    <div class="app-wrapper">
         <div class="header">
-            <h1 class="arduino-text">Street Lisener</h1>
-            <img class="arduino-logo" src="./img/logo.svg" alt="Arduino Logo">
+            <h1 class="arduino-text">Street Listener</h1>
+            <div class="location-badge">📍 Biblioteca Central</div>
         </div>
 
         <div class="main-content">
             <div class="container" id="video-container">
                 <div id="videoFeedContainer">
                     <div id="videoPlaceholder" class="camera-status">
-                        <img src="./img/no-face.svg" alt="Searching webcam">
-                        <p class="feedback-text"></p>
+                        <p class="feedback-text">Connectant amb la càmera...</p>
                     </div>
-                    <iframe id="dynamicIframe" title="Video stream" width="1024px" height="768px" frameBorder="0" style="display: none;"></iframe>
+                    <iframe id="dynamicIframe" title="Video stream" frameBorder="0" style="display: none;"></iframe>
                 </div>
             </div>
 
             <div class="right-column">
-                <div class="container container-right">
-                    <div class="controls-section">
-                        <div class="control-group">
-                            <div class="control-confidence">
-                                <div style="display: flex; align-items: center; gap: 8px; position: relative;">
-                                <label id="confidence-label" for="confidenceSlider">Confidence</label>
-                                <img src="./img/info.svg" alt="Info" class="info-btn confidence"/>
-                                <div class="popover"></div>
-                            </div>
-                                <button id="confidenceResetButton" class="btn-tertiary">
-                                    <input type="number" id="confidenceInput" class="confidence-input" min="0" max="1" step="0.05" value="0.50">
-                                    <img src="img/icon-reset.svg" alt="Reset" class="reset-icon">
-                                </button> 
-                            </div>
-                            <div class="slider-box">
-                                <span class="confidence-limits">0</span>
-                                <div class="slider-container">
-                                    <div class="slider-progress" id="sliderProgress"></div>
-                                    <div class="confidence-value-display" id="confidenceValueDisplay">0.5</div>
-                                    <input type="range" id="confidenceSlider" min="0" max="1" step="0.01" value="0.5">
-                                </div>
-                                <span class="confidence-limits">1</span>
-                            </div>
+                <div class="container maps-card">
+                    
+                    <div class="maps-header">
+                        <div class="live-indicator">
+                            <span class="pulse-dot"></span>
+                            <span class="live-text">EN DIRECTE</span>
                         </div>
+                    </div>
+
+                    <h2 id="status-text" class="status-text">Analitzant l'espai...</h2>
+                    
+                    <div class="popular-times-graph">
+                        <div class="bg-bar" style="height: 20%"></div>
+                        <div class="bg-bar" style="height: 35%"></div>
+                        <div class="bg-bar" style="height: 50%"></div>
+                        <div class="bg-bar" style="height: 80%"></div>
+                        <div class="bg-bar" style="height: 60%"></div>
+                        <div class="live-bar-container">
+                            <div class="live-value">Ara</div>
+                            <div id="live-bar" class="live-bar" style="height: 0%"></div>
+                        </div>
+                        <div class="bg-bar" style="height: 40%"></div>
+                        <div class="bg-bar" style="height: 20%"></div>
+                    </div>
+
+                    <div class="stats-footer">
+                        <p class="live-count"><span id="person-count" class="big-number">0</span> persones ara mateix</p>
+                        <p id="time-update" class="time-update">Esperant dades...</p>
                     </div>
                 </div>
 
-                <div class="container container-right">
-                    <div id="feedback-section" class="feedback-section">
-                        <div style="display: flex; align-items: center; gap: 8px; position: relative;">
-                        <h2 class="recent-scans-title" style="margin: 0;">Feedback</h2>
-                        <img src="./img/info.svg" alt="Info" class="info-btn feedback"/>
-                        <div class="popover"></div>
-                    </div>
-                        <div id="feedback-content" class="feedback-content">
-                            <img src="img/stars.svg" alt="Stars">
-                            <p class="feedback-text">System response will appear here</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="container container-right">
-                    <div class="recent-detections-section">
-                        <div class="recent-scans-title-container">
-                            <h2 class="recent-scans-title">Recent detections</h2>
-                        </div>
-                        <ul id="recentDetections"></ul>
-                    </div>
+                <div class="container maps-card opacity-50">
+                    <h3 class="secondary-title">🔊 Nivell de Soroll</h3>
+                    <p class="feedback-text">Pendent de connectar el sensor...</p>
                 </div>
             </div>
         </div>
-        <div id="error-container" class="error-message" style="display: none;"></div>
     </div>
 
     <script>
         const iframe = document.getElementById('dynamicIframe');
         const placeholder = document.getElementById('videoPlaceholder');
-        const currentHostname = window.location.hostname;
-        const targetPort = 4912;
-        const targetPath = '/embed';
-        const streamUrl = `http://${currentHostname}:${targetPort}${targetPath}`;
-
+        const streamUrl = `http://${window.location.hostname}:4912/embed`;
         let intervalId;
 
         iframe.onload = () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
+            if (intervalId) clearInterval(intervalId);
             placeholder.style.display = 'none';
             iframe.style.display = 'block';
         };
 
-        const startLoading = () => {
-            // Set the src to start loading
-            iframe.src = streamUrl;
-        };
-
-        intervalId = setInterval(startLoading, 1000); // Try to load every second
+        const startLoading = () => { iframe.src = streamUrl; };
+        intervalId = setInterval(startLoading, 1000); 
     </script>
 
     <script src="libs/socket.io.min.js"></script>
     <script src="app.js"></script>
-
 </body>
 </html>

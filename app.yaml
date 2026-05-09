@@ -4,4 +4,5 @@ ports: []
 bricks:
 - arduino:video_object_detection: {}
 - arduino:web_ui: {}
+- arduino:dbstorage_sqlstore: {}
 icon: 📽️

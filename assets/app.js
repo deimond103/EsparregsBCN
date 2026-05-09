@@ -44,18 +44,49 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initSocketIO() {
-    socket.on('update_aforament', async (message) => {
-      const persones = message.aforament;
-      const feedbackContentElement = document.getElementById('feedback-content');
-      
-      feedbackContentElement.innerHTML = `
-          <div class="feedback-detection">
-              <h2>Aforament actual</h2>
-              <div class="percentage" style="font-size: 48px; color: #00979d;">${persones} Persones</div>
-              <p>Última actualització: ${new Date(message.timestamp).toLocaleTimeString()}</p>
-          </div>
-      `;
-  });
+    
+
+socket.on('update_aforament', async (message) => {
+    const persones = message.aforament;
+    
+    // Agafem els elements de l'HTML
+    const statusText = document.getElementById('status-text');
+    const personCount = document.getElementById('person-count');
+    const timeUpdate = document.getElementById('time-update');
+    const liveBar = document.getElementById('live-bar');
+
+    // 1. Actualitzem el número
+    personCount.textContent = persones;
+
+    // 2. Traduïm l'aforament a text d'estat (tipus Google Maps)
+    // Pots ajustar aquests números segons la càmera
+    let capacitatMaxima = 10; 
+    
+    if (persones === 0) {
+        statusText.textContent = "Buit";
+    } else if (persones <= 3) {
+        statusText.textContent = "Poc concorregut";
+    } else if (persones <= 7) {
+        statusText.textContent = "Força concorregut";
+    } else {
+        statusText.textContent = "Molt concorregut";
+    }
+
+    // 3. Calculem l'alçada de la barra rosa (percentatge)
+    let percentatge = (persones / capacitatMaxima) * 100;
+    if (percentatge > 100) percentatge = 100; // Que no surti del gràfic
+    if (percentatge < 5 && persones > 0) percentatge = 5; // Mínim visual si hi ha algú
+
+    liveBar.style.height = `${percentatge}%`;
+
+    // 4. Actualitzem l'hora
+    const hora = new Date(message.timestamp).toLocaleTimeString('ca-ES');
+    timeUpdate.textContent = `Actualitzat a les ${hora}`;
+});
+
+socket.on('connect', () => {
+    console.log("Connectat al backend!");
+});
 
 }
 

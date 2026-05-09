@@ -173,3 +173,4 @@ At that point, the device begins performing the following:
     ```
 
     This maintains the object detection stream, callback hooks, threshold overrides, and WebSocket communication with the frontend.
+hola
