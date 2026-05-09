@@ -40,10 +40,10 @@ def init_db():
     conn.close()
 
 def get_severity(person_count):
-    if person_count >= 75: return "critical"
-    elif person_count >= 51: return "high"
-    elif person_count >= 36: return "medium"
-    elif person_count >= 20: return "low"
+    if person_count >= 4: return "critical"
+    elif person_count >= 3: return "high"
+    elif person_count >= 2: return "medium"
+    elif person_count >= 1: return "low"
     return None
 
 # --- DETECTION CALLBACK ---
@@ -90,8 +90,8 @@ def api_latest():
     conn.close()
     return {"latest": dict(row) if row else {}}
 
-ui.expose_api("GET", "/events", api_events)
-ui.expose_api("GET", "/latest", api_latest)
+ui.expose_api("GET", "/api/events", api_events)
+ui.expose_api("GET", "/api/latest", api_latest)
 
 # --- INIT ---
 init_db()
