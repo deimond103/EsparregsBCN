@@ -6,6 +6,8 @@ import os
 from arduino.app_utils import App
 from arduino.app_bricks.web_ui import WebUI
 from arduino.app_bricks.video_objectdetection import VideoObjectDetection
+from arduino.app_bricks.audio_classification import AudioClassification
+
 from datetime import datetime, UTC
 
 ui = WebUI()
@@ -95,4 +97,9 @@ ui.expose_api("GET", "/latest", api_latest)
 
 # --- INIT ---
 init_db()
+classifier = AudioClassification()
+classifier.on_detect("squeak", lambda: print(f"SQUEAK!"))
+classifier.on_detect("naturalcrowd", lambda: print(f"Standard"))
+classifier.on_detect("silence", lambda: print(f"Quiet..."))
+classifier.on_detect("crowd", lambda: print(f"Porbably a test :/ñh,k"))
 App.run()
