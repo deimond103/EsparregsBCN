@@ -12,7 +12,6 @@
             <h1 class="arduino-text">Street Listener</h1>
             <div class="location-badge">📍 Biblioteca Central</div>
         </div>
-
         <div class="main-content">
             <div class="container" id="video-container">
                 <div id="videoFeedContainer">
@@ -22,19 +21,15 @@
                     <iframe id="dynamicIframe" title="Video stream" frameBorder="0" style="display: none;"></iframe>
                 </div>
             </div>
-
             <div class="right-column">
                 <div class="container maps-card">
-                    
                     <div class="maps-header">
                         <div class="live-indicator">
                             <span class="pulse-dot"></span>
                             <span class="live-text">EN DIRECTE</span>
                         </div>
                     </div>
-
                     <h2 id="status-text" class="status-text">Analitzant l'espai...</h2>
-                    
                     <div class="popular-times-graph">
                         <div class="bg-bar" style="height: 20%"></div>
                         <div class="bg-bar" style="height: 35%"></div>
@@ -48,7 +43,6 @@
                         <div class="bg-bar" style="height: 40%"></div>
                         <div class="bg-bar" style="height: 20%"></div>
                     </div>
-
                     <div class="stats-footer">
                         <p class="live-count"><span id="person-count" class="big-number">0</span> persones ara mateix</p>
                         <p id="time-update" class="time-update">Esperant dades...</p>
@@ -59,6 +53,43 @@
                     <h3 class="secondary-title">🔊 Nivell de Soroll</h3>
                     <p class="feedback-text">Pendent de connectar el sensor...</p>
                 </div>
+
+                <!-- DB EVENTS PANEL -->
+                <div class="container maps-card" id="events-panel">
+                    <div class="events-header">
+                        <h3 class="secondary-title">⚠️ Alertes de Contaminació</h3>
+                        <button class="refresh-btn" id="refresh-events">↻</button>
+                    </div>
+                    <div id="events-list">
+                        <p class="feedback-text">Carregant alertes...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DB HISTORY TABLE -->
+        <div class="container history-panel">
+            <div class="events-header">
+                <h3 class="secondary-title">📊 Historial d'Aforament</h3>
+                <button class="refresh-btn" id="refresh-stats">↻</button>
+            </div>
+            <div id="history-stats" class="history-stats">
+                <div class="stat-box">
+                    <span class="stat-label">Total registres</span>
+                    <span class="stat-value" id="total-records">—</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Màxim detectat</span>
+                    <span class="stat-value" id="max-detected">—</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Última alerta</span>
+                    <span class="stat-value" id="last-alert">—</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Densitat actual</span>
+                    <span class="stat-value" id="current-density">—</span>
+                </div>
             </div>
         </div>
     </div>
@@ -68,17 +99,14 @@
         const placeholder = document.getElementById('videoPlaceholder');
         const streamUrl = `http://${window.location.hostname}:4912/embed`;
         let intervalId;
-
         iframe.onload = () => {
             if (intervalId) clearInterval(intervalId);
             placeholder.style.display = 'none';
             iframe.style.display = 'block';
         };
-
         const startLoading = () => { iframe.src = streamUrl; };
-        intervalId = setInterval(startLoading, 1000); 
+        intervalId = setInterval(startLoading, 1000);
     </script>
-
     <script src="libs/socket.io.min.js"></script>
     <script src="app.js"></script>
 </body>
