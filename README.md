@@ -1,89 +1,103 @@
-# Street Listener
+# 🎧 Street Listener
 
-Real-time crowd density and acoustic pollution monitoring dashboard for public spaces.
+> Real-time crowd density and acoustic pollution monitoring dashboard for public spaces.
 
-Street Listener is a lightweight monitoring dashboard built for smart public-space management. It combines live occupancy tracking, acoustic environment analysis, event logging, and historical statistics into a single interface.
+🌆 **Street Listener** is a lightweight smart-space monitoring dashboard built for libraries, shared workspaces, and public venues.  
+It combines:
 
-Designed as a proof-of-concept for libraries, shared workspaces, and public venues, the system provides operators with a real-time overview of crowd activity and noise conditions.
+- 👥 Live occupancy tracking
+- 🔊 Acoustic environment analysis
+- 🚨 Pollution + alert logging
+- 📈 Historical analytics
 
----
+into a single retro-inspired monitoring interface.
 
-## Features
-
-* Live crowd density monitoring
-* Real-time sound classification
-* Pollution and threshold alerts
-* Historical occupancy trends
-* Socket.IO live updates
-* REST API integration
-* Chart.js visualizations
-* Windows XP Luna-inspired interface
-* Dark mode support
+Designed as a proof-of-concept for smart public-space management, the system provides operators with a live overview of crowd activity and environmental conditions in real time.
 
 ---
 
-# Setup
+# ✨ Features
 
-## Prerequisites
+- 👥 Live crowd density monitoring
+- 🔊 Real-time sound classification
+- 🚨 Pollution and threshold alerts
+- 📈 Historical occupancy trends
+- ⚡ Socket.IO live updates
+- 🔌 REST API integration
+- 📊 Chart.js visualizations
+- 🖥️ Windows XP Luna-inspired interface
+- 🌙 Dark mode support
 
-RUN THIS FIRST: 
+---
 
-```
+# 🚀 Setup
+
+## 📋 Prerequisites
+
+### ⚠️ RUN THIS FIRST
+
+```bash
 sudo sed -i 's/${BIND_ADDRESS:-0.0.0.0}/0.0.0.0/g' /var/lib/arduino-app-cli/assets/0.9.0/compose/arduino/audio_classification/brick_compose.yaml
+
 sudo sed -i 's/${BIND_ADDRESS:-0.0.0.0}/0.0.0.0/g' /var/lib/arduino-app-cli/assets/0.9.0/compose/arduino/video_object_detection/brick_compose.yaml
 ```
-This is to ensure we are using the correct camera address instead of localhost. (I didn't know how to make App Lab stop overwriting .yaml files so this is the workaround we found)
+
+> This ensures the correct camera address is used instead of `localhost`.
+
+💀 App Lab keeps overwriting the `.yaml` files, so this is currently the workaround.
+
+---
 
 Before running the frontend, ensure the following services are available:
 
-* Node.js backend server
-* Socket.IO endpoint
-* REST API endpoints
-* Camera/video stream on port `4912`
-* Frontend usually on port `7000`
-* Modern browser (Chrome, Firefox, Edge)
+- 🟢 Node.js backend server
+- ⚡ Socket.IO endpoint
+- 🔌 REST API endpoints
+- 📹 Camera/video stream on port `4912`
+- 🌐 Frontend usually running on port `7000`
+- 🧭 Modern browser (Chrome, Firefox, Edge)
 
 ---
 
-## Tech Stack
+# 🛠️ Tech Stack
 
-| Layer              | Technology                          |
-| ------------------ | ----------------------------------- |
-| Frontend           | HTML, CSS, Vanilla JavaScript       |
-| Realtime Transport | Socket.IO                           |
-| Charts             | Chart.js                            |
-| Backend            | Node.js (expected external service) |
-| Styling            | Custom CSS                          |
+| Layer | Technology |
+|---|---|
+| 🎨 Frontend | HTML, CSS, Vanilla JavaScript |
+| ⚡ Realtime Transport | Socket.IO |
+| 📊 Charts | Chart.js |
+| 🖥️ Backend | Node.js (external service) |
+| 🎭 Styling | Custom CSS |
 
 ---
 
-## Project Structure
+# 📁 Project Structure
 
 ```text
 street-listener/
 ├── python/
-    └── main.py
+│   └── main.py
 ├── README.md
 ├── app.yaml
 └── assets/
     ├── app.js
     ├── index.html
-    ├──style.css
-    └──libs/
-       └── socket.io.min.js
+    ├── style.css
+    └── libs/
+        └── socket.io.min.js
 ```
 
-> The backend server is not included in this repository.
+> ⚠️ The backend server is **not included** in this repository.
 
 The frontend expects:
 
-* A Socket.IO server
-* A video stream running on port `4912`
-* REST API endpoints for stats and history
+- ⚡ A Socket.IO server
+- 📹 A video stream running on port `4912`
+- 🔌 REST API endpoints for stats and history
 
 ---
 
-# Architecture
+# 🧠 Architecture
 
 ```text
 Camera + Microphone
@@ -100,41 +114,41 @@ Live UI       Historical Data
 
 ---
 
-# Real-Time Events
+# ⚡ Real-Time Events
 
 The frontend listens for Socket.IO events from the backend.
 
-| Event              | Payload                    | Description                         |
-| ------------------ | -------------------------- | ----------------------------------- |
-| `update_aforament` | `{ aforament, timestamp }` | Updates current crowd count         |
-| `update_sound`     | `{ mode, timestamp }`      | Updates active sound classification |
-| `alert`            | `-`                        | Triggers alert UI refresh           |
+| Event | Payload | Description |
+|---|---|---|
+| `update_aforament` | `{ aforament, timestamp }` | 👥 Updates current crowd count |
+| `update_sound` | `{ mode, timestamp }` | 🔊 Updates active sound classification |
+| `alert` | `-` | 🚨 Triggers alert UI refresh |
 
 ---
 
-# Sound Classification
+# 🔊 Sound Classification
 
-| Mode Key       | Label       | Meaning                       |
-| -------------- | ----------- | ----------------------------- |
-| `silence`      | Silence     | No significant sound detected |
-| `naturalcrowd` | Ambient     | Normal environmental noise    |
-| `crowd`        | Crowd       | Elevated crowd noise          |
-| `squeak`       | Sharp Sound | Sudden or sharp sound event   |
+| Mode Key | Label | Meaning |
+|---|---|---|
+| `silence` | 🤫 Silence | No significant sound detected |
+| `naturalcrowd` | 🌿 Ambient | Normal environmental noise |
+| `crowd` | 🗣️ Crowd | Elevated crowd noise |
+| `squeak` | ⚠️ Sharp Sound | Sudden or sharp sound event |
 
 ---
 
-# Density Levels
+# 👥 Density Levels
 
 | People Count | Density |
-| ------------ | ------- |
-| `0`          | Empty   |
-| `1`          | Low     |
-| `2`          | Medium  |
-| `3+`         | High    |
+|---|---|
+| `0` | 🟢 Empty |
+| `1` | 🟡 Low |
+| `2` | 🟠 Medium |
+| `3+` | 🔴 High |
 
 ---
 
-# Recommendation Engine
+# 🧮 Recommendation Engine
 
 Street Listener computes a contamination score from crowd density and sound intensity.
 
@@ -142,40 +156,42 @@ Street Listener computes a contamination score from crowd density and sound inte
 totalScore = min(crowdScore + soundScore, 5)
 ```
 
-### Crowd Score
+## 👥 Crowd Score
 
 | Condition | Score |
-| --------- | ----- |
-| Empty     | 0     |
-| 1 person  | 1     |
-| 2 people  | 2     |
-| 3+ people | 3     |
+|---|---|
+| Empty | 0 |
+| 1 person | 1 |
+| 2 people | 2 |
+| 3+ people | 3 |
 
-### Sound Score
+## 🔊 Sound Score
 
-| Condition   | Score |
-| ----------- | ----- |
-| Silence     | 0     |
-| Ambient     | 1     |
-| Crowd Noise | 2     |
-| Sharp Sound | 3     |
+| Condition | Score |
+|---|---|
+| Silence | 0 |
+| Ambient | 1 |
+| Crowd Noise | 2 |
+| Sharp Sound | 3 |
 
-### Severity Levels
+## 🚨 Severity Levels
 
-| Score | Level      |
-| ----- | ---------- |
-| 0     | Optimal    |
-| 1     | Acceptable |
-| 2     | Attention  |
-| 3     | Alert      |
-| 4     | Critical   |
-| 5     | Extreme    |
+| Score | Level |
+|---|---|
+| 0 | 🟢 Optimal |
+| 1 | 🔵 Acceptable |
+| 2 | 🟡 Attention |
+| 3 | 🟠 Alert |
+| 4 | 🔴 Critical |
+| 5 | ☠️ Extreme |
 
 ---
 
-# REST API
+# 🔌 REST API
 
 The frontend polls backend endpoints every 30 seconds.
+
+---
 
 ## `GET /api/events`
 
@@ -197,10 +213,10 @@ Returns recent contamination or alert events.
 
 ### Severity Values
 
-* `low`
-* `medium`
-* `high`
-* `critical`
+- `low`
+- `medium`
+- `high`
+- `critical`
 
 ---
 
@@ -225,9 +241,9 @@ Returns historical occupancy data.
 
 ### Parameters
 
-| Parameter | Description    |
-| --------- | -------------- |
-| `hora`    | Hourly history |
+| Parameter | Description |
+|---|---|
+| `hora` | Hourly history |
 | `setmana` | Weekly history |
 
 ### Example
@@ -243,40 +259,40 @@ Returns historical occupancy data.
 
 ---
 
-# Dashboard Panels
+# 🖥️ Dashboard Panels
 
-## Alerts
+## 🚨 Alerts
 
 Displays the latest pollution events with severity indicators.
 
-## Sound Analysis
+## 🔊 Sound Analysis
 
 Shows the currently active sound classification in real time.
 
-## Camera Feed
+## 📹 Camera Feed
 
 Embeds the live camera stream from the local backend.
 
-## Occupancy Chart
+## 📈 Occupancy Chart
 
 Displays live and historical occupancy trends using Chart.js.
 
-## Statistics
+## 📊 Statistics
 
 Shows aggregate metrics including:
 
-* Total records
-* Maximum occupancy detected
-* Last alert timestamp
-* Current density level
+- 📁 Total records
+- 👥 Maximum occupancy detected
+- ⏰ Last alert timestamp
+- 📍 Current density level
 
-## Recommendations
+## 💡 Recommendations
 
 Displays contamination score, recommendations, and mitigation actions.
 
 ---
 
-# Dark Mode
+# 🌙 Dark Mode
 
 Dark mode can be toggled directly from the dashboard UI.
 
@@ -284,13 +300,13 @@ The selected preference is persisted using `localStorage`.
 
 ---
 
-## Running the Frontend
+# ▶️ Running the Frontend
 
 The dashboard is a static frontend application.
 
 Serve it from the same origin as the backend to avoid CORS issues.
 
-### Example Express Setup
+## Example Express Setup
 
 ```js
 app.use(express.static('public'));
@@ -304,33 +320,37 @@ http://localhost:<port>
 
 ---
 
-## Socket.IO Compatibility
+# ⚡ Socket.IO Compatibility
 
-The project includes a bundled Socket.IO client inside `libs/socket.io.min.js`.
+The project includes a bundled Socket.IO client inside:
+
+```text
+libs/socket.io.min.js
+```
 
 Ensure the frontend and backend Socket.IO versions are compatible.
 
 ---
 
-# UI Design
+# 🎨 UI Design
 
-Street Listener uses a custom interface inspired by the classic Windows XP Luna theme.
+Street Listener uses a custom interface inspired by the classic **Windows XP Luna** theme.
 
 Features include:
 
-* XP-style panels and title bars
-* Custom gradients and borders
-* Retro UI components
-* CSS-based dark mode
-* Bliss wallpaper background
+- 🪟 XP-style panels and title bars
+- 🌈 Custom gradients and borders
+- 💾 Retro UI components
+- 🌙 CSS-based dark mode
+- 🌄 Bliss wallpaper background
 
 All styling is implemented in vanilla CSS.
 
 ---
 
-# License
+# 📜 License
 
-Licensed under the MPL-2.0 License.
+Licensed under the **MPL-2.0 License**.
 
 ```text
 SPDX-License-Identifier: MPL-2.0
