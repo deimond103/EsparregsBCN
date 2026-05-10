@@ -24,6 +24,35 @@ const SOUND_LABELS = {
     squeak: { label: "Soroll agut", color: "#c5221f", bg: "#fce8e6" }
 };
 
+let modeActual = 'segons'; // Mode per defecte
+
+let aforamentChart = null;
+const MAX_PUNTS = 15;
+
+//CANVI RANG GRAFICA
+function canviarRang(nouMode) {
+    modeActual = nouMode;
+    
+    // Estètica: Actualitzar botons actius
+    document.querySelectorAll('.chart-controls button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`btn-${nouMode}`).classList.add('active');
+
+    // Netejar la gràfica per carregar dades noves
+    aforamentChart.data.labels = [];
+    aforamentChart.data.datasets[0].data = [];
+    
+    if (nouMode === 'segons') {
+        // En mode segons, esperem que arribin dades per Socket.io
+        aforamentChart.update();
+    } else {
+        // Per "hora" o "setmana", demanem les dades a la base de dades
+        carregarDadesHistoriques(nouMode);
+    }
+}
+
+
+
+
 // --- HELPERS ---
 function getDensityElement() {
     return document.getElementById('current-density');
@@ -42,6 +71,35 @@ function updateDensity(level, color) {
 }
 
 // --- DB FETCH FUNCTIONS ---
+async function carregarDadesHistoriques(rang) {
+    // Si el rang és 'hora', anirà a /api/history/hora
+    // Si el rang és 'setmana', anirà a /api/history/setmana
+    const url = `/api/history/${rang}`; 
+    
+    try {
+        const response = await fetch(url);
+        const text = await response.text(); // Primer llegim com a text per depurar
+        
+        try {
+            const json = JSON.parse(text);
+            const dades = json.data;
+
+            if (dades && dades.length > 0) {
+                aforamentChart.data.labels = dades.map(d => d.timestamp);
+                aforamentChart.data.datasets[0].data = dades.map(d => d.count);
+                aforamentChart.update();
+            } else {
+                console.warn("No hi ha dades per a aquest rang.");
+            }
+        } catch (e) {
+            console.error("El servidor no ha enviat JSON. Ha enviat:", text);
+        }
+    } catch (e) {
+        console.error("Error de connexió:", e);
+    }
+}
+
+
 async function fetchEvents() {
     try {
         const res = await fetch(`http://${window.location.host}/api/events`);
@@ -134,75 +192,105 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(fetchStats, 30000);
 });
 
+function inicialitzarGrafica() {
+    const canvas = document.getElementById('aforamentChart');
+    if (!canvas) return; // Seguretat per si el canvas no hi és
+
+    const ctx = canvas.getContext('2d');
+    aforamentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Aforament',
+                data: [],
+                borderColor: '#1a73e8',
+                backgroundColor: 'rgba(26, 115, 232, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, suggestedMax: 5, ticks: { stepSize: 1 } },
+                x: { display: true }
+            }
+        }
+    });
+}
+
 // --- SOCKET ---
 function initSocketIO() {
+    inicialitzarGrafica();
+    
     socket.on('update_aforament', (message) => {
         const persones = message.aforament;
+        
+        // Generem el format de l'hora una sola vegada
+        const horaFormat = new Date(message.timestamp).toLocaleTimeString('ca-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
 
-        const statusText =
-            document.getElementById('status-text');
+        const statusText = document.getElementById('status-text');
+        const personCount = document.getElementById('person-count');
+        const timeUpdate = document.getElementById('time-update');
 
-        const personCount =
-            document.getElementById('person-count');
+        // Actualitzem el comptador numèric
+        if (personCount) personCount.textContent = persones;
 
-        const timeUpdate =
-            document.getElementById('time-update');
-
-        const liveBar =
-            document.getElementById('live-bar');
-
-        personCount.textContent = persones;
-
+        // Lògica d'estats i densitat
         if (persones >= 3) {
             updateDensity('Alta', '#c5221f');
-            statusText.textContent = "Molt concorregut";
-
+            if (statusText) statusText.textContent = "Molt concorregut";
         } else if (persones >= 2) {
             updateDensity('Mitjana', '#b06000');
-            statusText.textContent = "Força concorregut";
-
+            if (statusText) statusText.textContent = "Força concorregut";
         } else if (persones >= 1) {
             updateDensity('Baixa', '#137333');
-            statusText.textContent = "Poc concorregut";
-
+            if (statusText) statusText.textContent = "Poc concorregut";
         } else {
             updateDensity('Buit', '#555555');
-            statusText.textContent = "Buit";
+            if (statusText) statusText.textContent = "Buit";
         }
 
-        let percentatge = (persones / 10) * 100;
+        // Actualitzem el text de l'última connexió
+        if (timeUpdate) {
+            timeUpdate.textContent = `Actualitzat a les ${horaFormat}`;
+        }
 
-        if (percentatge > 100) percentatge = 100;
-        if (percentatge < 5 && persones > 0) percentatge = 5;
-
-        liveBar.style.height = `${percentatge}%`;
-
-        const hora = new Date(message.timestamp)
-            .toLocaleTimeString('ca-ES');
-
-        timeUpdate.textContent =
-            `Actualitzat a les ${hora}`;
+        // --- ACTUALITZACIÓ DE LA GRÀFICA ---
+       if (modeActual === 'segons' && aforamentChart) {
+          const horaFormat = new Date(message.timestamp).toLocaleTimeString('ca-ES');
+          aforamentChart.data.labels.push(horaFormat);
+          aforamentChart.data.datasets[0].data.push(message.aforament);
+  
+          if (aforamentChart.data.labels.length > MAX_PUNTS) {
+              aforamentChart.data.labels.shift();
+              aforamentChart.data.datasets[0].data.shift();
+          }
+          aforamentChart.update('none');
+      }
     });
 
+    // ... la resta de socket.on (update_sound, alert, etc.) es mantenen igual
     socket.on('update_sound', (message) => {
-        const s =
-            SOUND_LABELS[message.mode] ||
-            SOUND_LABELS.silence;
+        const s = SOUND_LABELS[message.mode] || SOUND_LABELS.silence;
+        const statusEl = document.getElementById('sound-status');
+        if (statusEl) statusEl.textContent = s.label;
 
-        document.getElementById('sound-status')
-            .textContent = s.label;
+        document.querySelectorAll('.sound-mode-box').forEach(el => {
+            el.classList.remove('active');
+            el.style.background = '';
+            el.style.color = '';
+            el.style.fontWeight = '';
+        });
 
-        document.querySelectorAll('.sound-mode-box')
-            .forEach(el => {
-                el.classList.remove('active');
-                el.style.background = '';
-                el.style.color = '';
-                el.style.fontWeight = '';
-            });
-
-        const activeBox =
-            document.getElementById(`mode-${message.mode}`);
-
+        const activeBox = document.getElementById(`mode-${message.mode}`);
         if (activeBox) {
             activeBox.classList.add('active');
             activeBox.style.background = s.bg;
@@ -210,23 +298,17 @@ function initSocketIO() {
             activeBox.style.fontWeight = '700';
         }
 
-        const hora = new Date(message.timestamp)
-            .toLocaleTimeString('ca-ES');
-
-        document.getElementById('sound-time')
-            .textContent = `Actualitzat a les ${hora}`;
+        const horaSo = new Date(message.timestamp).toLocaleTimeString('ca-ES');
+        const timeSoEl = document.getElementById('sound-time');
+        if (timeSoEl) timeSoEl.textContent = `Actualitzat a les ${horaSo}`;
     });
 
     socket.on('alert', () => {
-        const panel =
-            document.getElementById('events-panel');
-
-        panel.classList.add('alert-flash');
-
-        setTimeout(() => {
-            panel.classList.remove('alert-flash');
-        }, 1000);
-
+        const panel = document.getElementById('events-panel');
+        if (panel) {
+            panel.classList.add('alert-flash');
+            setTimeout(() => panel.classList.remove('alert-flash'), 1000);
+        }
         fetchEvents();
         fetchStats();
     });

@@ -30,19 +30,17 @@
                         </div>
                     </div>
                     <h2 id="status-text" class="status-text">Analitzant l'espai...</h2>
-                    <div class="popular-times-graph">
-                        <div class="bg-bar" style="height: 20%"></div>
-                        <div class="bg-bar" style="height: 35%"></div>
-                        <div class="bg-bar" style="height: 50%"></div>
-                        <div class="bg-bar" style="height: 80%"></div>
-                        <div class="bg-bar" style="height: 60%"></div>
-                        <div class="live-bar-container">
-                            <div class="live-value">Ara</div>
-                            <div id="live-bar" class="live-bar" style="height: 0%"></div>
-                        </div>
-                        <div class="bg-bar" style="height: 40%"></div>
-                        <div class="bg-bar" style="height: 20%"></div>
+                  <div class="chart-controls" style="margin-bottom: 10px; display: flex; gap: 8px;">
+                      <button onclick="canviarRang('segons')" id="btn-segons" class="active">Segons</button>
+                      <button onclick="canviarRang('hora')" id="btn-hora">Hora</button>
+                      <button onclick="canviarRang('setmana')" id="btn-setmana">Setmana</button>
+                  </div>
+                    <div style="height: 200px; margin-top: 16px;">
+                        <canvas id="aforamentChart"></canvas>
                     </div>
+                    
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                  
                     <div class="stats-footer">
                         <p class="live-count"><span id="person-count" class="big-number">0</span> persones ara mateix</p>
                         <p id="time-update" class="time-update">Esperant dades...</p>

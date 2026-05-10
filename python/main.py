@@ -16,7 +16,7 @@ ui.on_message("override_th", lambda sid, threshold: detection_stream.override_th
 
 # --- ESTRUCTURA DE DADES ---
 historial_aforament = []
-MAX_BUFFER_PERSONES = 10
+MAX_BUFFER_PERSONES = 2
 ultima_lectura_persones = 0
 
 def calcular_aforament_real(lectura_actual):
@@ -29,6 +29,18 @@ def calcular_aforament_real(lectura_actual):
 # --- DB SETUP ---
 DB_PATH = "/home/arduino/data/monitoring.db"
 os.makedirs("/home/arduino/data", exist_ok=True)
+
+def get_history_data(interval, fmt):
+    conn = get_db()
+    c = conn.cursor()
+    query = f"SELECT strftime('{fmt}', recorded_at) as ts, AVG(person_count) as count FROM crowd_readings WHERE recorded_at > datetime('now', '{interval}') GROUP BY ts ORDER BY recorded_at ASC"
+    c.execute(query)
+    data = [{"timestamp": r["ts"], "count": round(r["count"], 1)} for r in rows]
+    conn.close()
+    return {"data": data}
+
+ui.expose_api("GET", "/api/history/hora", lambda: get_history_data("-1 hour", "%H:%M"))
+ui.expose_api("GET", "/api/history/setmana", lambda: get_history_data("-7 days", "%d/%m"))
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -71,29 +83,53 @@ def get_severity(person_count):
 def send_detections_to_ui(detections: dict):
     global ultima_lectura_persones
 
-    persones_vistes_ara = len(detections.get("person", []))
+    # 1. Obtenim la llista de persones. Si no n'hi ha cap, serà una llista buida []
+    llista_persones = detections.get("person", [])
+    persones_vistes_ara = len(llista_persones)
+    
+    # 2. Calculem l'aforament real (mitjana/màxim del buffer)
+    # Si persones_vistes_ara és 0, aquesta funció acabarà retornant 0 quan el buffer es buidi
     person_count = calcular_aforament_real(persones_vistes_ara)
     ultima_lectura_persones = person_count
 
-    density = "high" if person_count >= 51 else "medium" if person_count >= 20 else "low"
+    # 3. Determinem la densitat (incloent el cas de 0 persones)
+    if person_count == 0:
+        density = "none"
+    elif person_count >= 51: 
+        density = "high"
+    elif person_count >= 20: 
+        density = "medium"
+    else: 
+        density = "low"
 
+    # 4. GUARDEM SEMPRE A LA DB (encara que sigui 0)
     conn = get_db()
-    conn.execute("INSERT INTO crowd_readings (person_count, density_level) VALUES (?, ?)",
-                 (person_count, density))
-    severity = get_severity(person_count)
-    if severity:
-        conn.execute("INSERT INTO contamination_events (crowd_count, severity) VALUES (?, ?)",
-                     (person_count, severity))
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute("INSERT INTO crowd_readings (person_count, density_level) VALUES (?, ?)",
+                     (person_count, density))
+        
+        # 5. Només guardem esdeveniments si hi ha gent (per no omplir la taula d'alertes buides)
+        severity = get_severity(person_count)
+        if severity and person_count > 0:
+            conn.execute("INSERT INTO contamination_events (crowd_count, severity) VALUES (?, ?)",
+                         (person_count, severity))
+        
+        conn.commit()
+    except Exception as e:
+        print(f"Error guardant lectura: {e}")
+    finally:
+        conn.close()
 
+    # 6. Enviem el missatge a la web
     entry = {
         "aforament": person_count,
         "timestamp": datetime.now(UTC).isoformat()
     }
     ui.send_message("update_aforament", message=entry)
-    if severity:
+    
+    if severity and person_count > 0:
         ui.send_message("alert", {"severity": severity, "crowd_count": person_count})
+
 
 detection_stream.on_detect_all(send_detections_to_ui)
 
@@ -207,7 +243,41 @@ def api_stats():
         "max_count": max_count or 0,
         "latest": dict(latest) if latest else {}
     }
+# --- API HISTORIAL (SENSE FLASK) ---
 
+# --- API HISTORIAL CORREGIDA ---
+
+def get_history_data(interval, fmt):
+    conn = None
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        # SQL que agrupa per el format de temps indicat
+        query = f"""
+            SELECT strftime('{fmt}', recorded_at) as ts, AVG(person_count) as avg_count 
+            FROM crowd_readings 
+            WHERE recorded_at > datetime('now', '{interval}')
+            GROUP BY ts ORDER BY recorded_at ASC
+        """
+        c.execute(query)
+        
+        # AQUÍ ESTÀ LA CORRECCIÓ:
+        rows = c.fetchall() 
+        
+        # Convertim a format llista per al JSON
+        data = [{"timestamp": r["ts"], "count": round(r["avg_count"], 1)} for r in rows]
+        return {"data": data}
+        
+    except Exception as e:
+        print(f"Error a la base de dades: {e}")
+        return {"data": [], "error": str(e)}
+    finally:
+        if conn:
+            conn.close()
+
+# Registre de les rutes (el lambda ara funcionarà bé)
+ui.expose_api("GET", "/api/history/hora", lambda: get_history_data("-1 hour", "%H:%M"))
+ui.expose_api("GET", "/api/history/setmana", lambda: get_history_data("-7 days", "%d/%m"))
 ui.expose_api("GET", "/api/events", api_events)
 ui.expose_api("GET", "/api/latest", api_latest)
 ui.expose_api("GET", "/api/stats", api_stats)
