@@ -15,10 +15,12 @@
         <div class="main-content">
             <div class="container" id="video-container">
                 <div id="videoFeedContainer">
-                    <div id="videoPlaceholder" class="camera-status">
-                        <p class="feedback-text">Connectant amb la càmera...</p>
-                    </div>
+                  <div id="videoPlaceholder" class="camera-status">
+                    <p class="feedback-text">Connectant amb la càmera...</p>
+                  </div>
+                  <div style="border: 4px solid #0a246a; box-shadow: inset 0 0 0 2px #ffffff, inset 0 0 0 3px #4a6fcd; width: 100%; height: 100%; box-sizing: border-box;">
                     <iframe id="dynamicIframe" title="Video stream" frameBorder="0" style="display: none;"></iframe>
+                  </div>
                 </div>
             </div>
             <div class="right-column">
@@ -103,6 +105,41 @@
                 </div>
             </div>
         </div>
+
+        <!-- RECOMMENDATIONS PANEL -->
+        <div class="container" id="rec-panel">
+            <div class="rec-panel-inner">
+                <div class="rec-header">
+                    <div class="live-indicator">
+                        <span class="pulse-dot" style="background:#3a9620;border-color:#1a5c08;"></span>
+                        <span class="live-text">ASSISTENT ACTIU</span>
+                    </div>
+                    <button class="rec-pause-btn" id="rec-pause-btn" onclick="toggleRecPause()">⏸ Pausar</button>
+                    <span id="rec-timestamp" class="time-update">Esperant dades...</span>
+                </div>
+
+                <div class="rec-score-row">
+                    <div class="rec-score-box" id="rec-score-box">
+                        <span class="rec-score-label">Índex de contaminació</span>
+                        <span class="rec-score-value" id="rec-score">—</span>
+                        <span class="rec-score-tag" id="rec-score-tag">—</span>
+                    </div>
+                    <div class="rec-main" id="rec-main">
+                        <div class="rec-icon" id="rec-icon">🟢</div>
+                        <div class="rec-text">
+                            <p class="rec-title" id="rec-title">Esperant dades del sensor...</p>
+                            <p class="rec-desc" id="rec-desc">El sistema analitzarà la situació en temps real i proposarà accions concretes.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rec-actions-title">Accions recomanades</div>
+                <div class="rec-actions" id="rec-actions">
+                    <div class="rec-action-btn disabled">Esperant dades...</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
