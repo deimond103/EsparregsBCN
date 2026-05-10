@@ -22,6 +22,29 @@ Designed as a proof-of-concept for libraries, shared workspaces, and public venu
 
 ---
 
+# Setup
+
+## Prerequisites
+
+RUN THIS FIRST: 
+
+```
+sudo sed -i 's/${BIND_ADDRESS:-0.0.0.0}/0.0.0.0/g' /var/lib/arduino-app-cli/assets/0.9.0/compose/arduino/audio_classification/brick_compose.yaml
+sudo sed -i 's/${BIND_ADDRESS:-0.0.0.0}/0.0.0.0/g' /var/lib/arduino-app-cli/assets/0.9.0/compose/arduino/video_object_detection/brick_compose.yaml
+```
+This is to ensure we are using the correct camera address instead of localhost. (I didn't know how to make App Lab stop overwriting .yaml files so this is the workaround we found)
+
+Before running the frontend, ensure the following services are available:
+
+* Node.js backend server
+* Socket.IO endpoint
+* REST API endpoints
+* Camera/video stream on port `4912`
+* Frontend usually on port `7000`
+* Modern browser (Chrome, Firefox, Edge)
+
+---
+
 ## Tech Stack
 
 | Layer              | Technology                          |
@@ -261,20 +284,6 @@ The selected preference is persisted using `localStorage`.
 
 ---
 
-# Setup
-
-## Prerequisites
-
-Before running the frontend, ensure the following services are available:
-
-* Node.js backend server
-* Socket.IO endpoint
-* REST API endpoints
-* Camera/video stream on port `4912`
-* Modern browser (Chrome, Firefox, Edge)
-
----
-
 ## Running the Frontend
 
 The dashboard is a static frontend application.
@@ -328,18 +337,3 @@ SPDX-License-Identifier: MPL-2.0
 ```
 
 ---
-
-# Notes
-
-This repository currently contains only the frontend dashboard.
-
-The backend service responsible for:
-
-* Camera processing
-* Sound analysis
-* Crowd detection
-* Event generation
-* REST API responses
-* Socket.IO broadcasting
-
-must be implemented and hosted separately.
