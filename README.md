@@ -126,6 +126,19 @@ The frontend listens for Socket.IO events from the backend.
 
 ---
 
+# 💡 LED Crowd Classification
+
+The system also exposes a simple LED-based occupancy indicator for physical installations or IoT displays.
+
+| People Count | LED Color | Status |
+|---|---|---|
+| `0` | 🟢 Green | Empty |
+| `1` | 🔵 Blue | Low occupancy |
+| `2` | 🟡 Yellow | Medium occupancy |
+| `3+` | 🔴 Red | High occupancy |
+
+---
+
 # 🔊 Sound Classification
 
 | Mode Key | Label | Meaning |
