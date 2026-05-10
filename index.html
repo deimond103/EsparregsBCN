@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street Listener - Hub Central</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tahoma:wght@400;700&display=swap');
+
+        :root {
+            --xp-desktop: #3a6ea5;
+            --xp-panel-bg: #ece9d8;
+            --xp-title-start: #0a246a;
+            --xp-blue-light: #4a6fcd;
+            --xp-button-dark-shadow: #716f64;
+        }
+
+        body {
+            font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+            background-color: var(--xp-desktop);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #000; /* Text en negre com a l'XP */
+        }
+
+        /* La finestra principal de l'XP */
+        .hub-container {
+            background: var(--xp-panel-bg);
+            text-align: center;
+            padding: 40px 40px 30px 40px; /* Més espai a dalt per la barra de títol */
+            border-top: 1px solid #ffffff;
+            border-left: 1px solid #ffffff;
+            border-right: 1px solid var(--xp-button-dark-shadow);
+            border-bottom: 1px solid var(--xp-button-dark-shadow);
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.35), 1px 1px 0 #aca899;
+            position: relative;
+            width: 400px;
+        }
+
+        /* La barra de títol blava característica */
+        .hub-container::before {
+            content: '■  Control Central - Street Listener';
+            position: absolute;
+            top: 2px; left: 2px; right: 2px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(to right, var(--xp-title-start) 0%, var(--xp-blue-light) 100%);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 6px;
+            height: 22px;
+            letter-spacing: 0.3px;
+        }
+
+        .hub-container h1 {
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .botons-grid {
+            display: flex;
+            flex-direction: column; /* Posem els botons un sota l'altre */
+            gap: 15px;
+            margin-top: 25px;
+            align-items: center;
+        }
+
+        /* Botons interactius 3D estil Windows 98/XP */
+        .btn-arduino {
+            background: linear-gradient(to bottom, #f5f4ef, #dbd8c8);
+            color: #000;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: bold;
+            width: 80%;
+            border-top: 1px solid #ffffff;
+            border-left: 1px solid #ffffff;
+            border-right: 1px solid var(--xp-button-dark-shadow);
+            border-bottom: 1px solid var(--xp-button-dark-shadow);
+            box-shadow: inset 1px 1px 0 rgba(255,255,255,0.8);
+            cursor: pointer;
+        }
+
+        /* Efecte d'enfonsar-se al fer clic */
+        .btn-arduino:active {
+            border-top: 1px solid var(--xp-button-dark-shadow);
+            border-left: 1px solid var(--xp-button-dark-shadow);
+            border-right: 1px solid #ffffff;
+            border-bottom: 1px solid #ffffff;
+            box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3);
+            padding: 11px 19px 9px 21px; /* Desplaça el text una mica per donar realisme */
+        }
+
+        /* Botó desactivat per la càmera pendent */
+        .btn-secundari {
+            color: #aca899;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hub-container">
+        <h1>🎙️ Control Central - Street Listener</h1>
+        <p>Selecciona l'espai per veure l'aforament i el so en directe:</p>
+
+        <div class="botons-grid">
+            <!-- BOTÓ 1: Primer Arduino (Ja el tenies) -->
+            <a href="http://10.63.0.157:7000/" target="_blank" class="btn-arduino">
+                📍 Arduino 1 (10.63.0.157)
+            </a>
+
+            <!-- BOTÓ 2: Segon Arduino (IP actualitzada i activat) -->
+            <a href="http://10.63.0.147:7000/" target="_blank" class="btn-arduino">
+                📍 Arduino 2 (10.63.0.147)
+            </a>
+
+            <!-- BOTÓ 3: Placeholder per analitzar la xarxa -->
+            <a href="#" class="btn-arduino btn-secundari" onclick="alert('Funció d\'anàlisi de xarxa en desenvolupament...'); return false;">
+                🔍 Analitzar la xarxa
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
