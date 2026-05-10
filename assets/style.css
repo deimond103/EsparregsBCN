@@ -29,7 +29,6 @@
     --xp-yellow: #e8c42a;
 }
 
-/* DESKTOP BACKGROUND */
 * { box-sizing: border-box; }
 
 body {
@@ -63,7 +62,6 @@ body::after {
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
 }
 
-/* START BUTTON simulation via app-wrapper pseudo */
 body::before {
     content: '▶ start';
     font-family: 'Tahoma', sans-serif;
@@ -90,7 +88,9 @@ body::before {
     cursor: pointer;
 }
 
-/* MAIN CONTENT AREA — above taskbar */
+/* =============================================
+   APP WRAPPER
+   ============================================= */
 .app-wrapper {
     width: 100%;
     max-width: 1240px;
@@ -100,11 +100,10 @@ body::before {
 }
 
 /* =============================================
-   XP WINDOW CHROME MIXIN (applied to .container)
+   XP WINDOW CHROME
    ============================================= */
 .container {
     background: var(--xp-panel-bg);
-    border-radius: 0;
     border-top: 1px solid #ffffff;
     border-left: 1px solid #ffffff;
     border-right: 1px solid var(--xp-button-dark-shadow);
@@ -117,10 +116,12 @@ body::before {
     overflow: hidden;
 }
 
-/* XP Title Bar */
+/* XP Title Bar via ::before on every .container */
 .container::before {
     content: '■  Street Listener';
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 4px;
     background: linear-gradient(to right, var(--xp-title-start) 0%, var(--xp-blue-light) 70%, #6b92e8 100%);
     color: #ffffff;
     font-size: 11px;
@@ -129,14 +130,10 @@ body::before {
     padding: 3px 6px;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     height: 22px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
     letter-spacing: 0.3px;
     border-bottom: 1px solid #1239a5;
 }
 
-/* Window control buttons in title bar (fake, decorative) */
 .container::after {
     content: '';
     display: block;
@@ -144,10 +141,43 @@ body::before {
     background: linear-gradient(to bottom, #c9c4b5, transparent);
 }
 
-/* INNER PADDING for content inside windows */
-.maps-card,
-.history-panel {
-    padding: 8px 10px 10px 10px !important;
+/* Per-panel title bar text */
+#events-panel::before    { content: '⚠️  Alertes de Contaminació'; }
+#sound-panel::before     { content: '🔊  Anàlisi de So'; }
+#video-container::before { content: '📹  Càmera en directe'; }
+#chart-panel-card::before{ content: '📈  Aforament en temps real'; }
+#rec-panel::before       { content: '💡  Recomanacions intel·ligents — Assistent de gestió urbana'; }
+.history-panel::before   { content: '📊  Historial d\'Aforament'; }
+
+/* =============================================
+   INNER PADDING AREA
+   ============================================= */
+.panel-inner {
+    padding: 8px 10px 10px 10px;
+}
+
+/* =============================================
+   SUB-HEADER BARS (live indicator rows, just below title bar)
+   ============================================= */
+.events-header,
+.sound-header,
+.video-live-bar,
+.chart-live-bar,
+.rec-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    border-bottom: 1px solid #aca899;
+    background: #dbd8c8;
+}
+
+.events-header {
+    justify-content: flex-end;
+}
+
+.rec-header {
+    justify-content: space-between;
 }
 
 /* =============================================
@@ -161,7 +191,6 @@ body::before {
     padding: 6px 10px;
     background: linear-gradient(to bottom, #3a6fd8, #2454c0);
     border: 1px solid #1239a5;
-    border-radius: 0;
     box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
@@ -179,7 +208,6 @@ body::before {
     background: linear-gradient(to bottom, #5b8de8, #3a6fd8);
     color: #ffffff;
     padding: 3px 10px;
-    border-radius: 0;
     font-weight: bold;
     font-size: 11px;
     border: 1px solid #1a4ab5;
@@ -194,48 +222,57 @@ body::before {
     display: flex;
     gap: 10px;
     align-items: stretch;
+}
+
+/* LEFT COLUMN */
+.left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 300px;
+    flex-shrink: 0;
+}
+
+/* RIGHT COLUMN */
+.right-column {
     flex: 1;
-    min-height: 0;
-    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
 }
 
 /* =============================================
-   VIDEO CONTAINER — XP Media Player style
+   VIDEO CONTAINER
    ============================================= */
-
-
-#video-container::before {
-    content: '📹  Càmera en directe';
-}
-
-#videoFeedContainer {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-#dynamicIframe {
-    width: 90%;
-    height: 90%;
-    border: none;
-    display: block;
-    margin-top: 30px;
-    margin-left: 40px;
-    align-items: center;
-}
-
 #video-container {
-    flex-grow: 2.5;
     padding: 0 !important;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     background: #000 !important;
+    flex-shrink: 0;
+    height: 620px;
+}
+
+#videoFeedContainer {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    background: #000;
+    overflow: hidden;
+}
+
+#dynamicIframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+    display: block;
+    overflow: hidden;
+    transform-origin: top left;
+    transform: scale(1);          /* scale down the feed */
+    width: calc(100%);        /* compensate width so it fills horizontally */
+    height: calc(100%);       /* compensate height */
 }
 
 #videoPlaceholder {
@@ -246,39 +283,21 @@ body::before {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 300px;
+    flex: 1;
     background: #1a1a1a;
 }
 
-/* =============================================
-   RIGHT COLUMN
-   ============================================= */
-.right-column {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 320px;
+#video-container::after {
+    display: none;
 }
 
 /* =============================================
    LIVE INDICATOR
    ============================================= */
-.maps-header {
-    margin-bottom: 6px;
-}
-
 .live-indicator {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #ece9d8;
-    border: 1px solid #aca899;
-    border-top-color: #716f64;
-    border-left-color: #716f64;
-    padding: 3px 8px;
-    border-radius: 0;
-    box-shadow: inset 1px 1px 0 rgba(255,255,255,0.8);
 }
 
 .pulse-dot {
@@ -313,55 +332,6 @@ body::before {
     font-weight: bold;
     color: #000;
     font-family: 'Tahoma', sans-serif;
-}
-
-/* =============================================
-   POPULARITY GRAPH — XP chart style
-   ============================================= */
-.popular-times-graph {
-    display: flex;
-    align-items: flex-end;
-    height: 90px;
-    gap: 3px;
-    border-bottom: 1px solid #aca899;
-    border-left: 1px solid #aca899;
-    padding-bottom: 4px;
-    margin-top: 8px;
-    background: #ffffff;
-    padding: 4px 4px 4px 4px;
-    border: 2px inset #aca899;
-}
-
-.bg-bar {
-    flex-grow: 1;
-    background: linear-gradient(to bottom, #8bb4e8, #4a80c8);
-    border: 1px solid #2454a0;
-    border-radius: 0;
-}
-
-.live-bar-container {
-    flex-grow: 1;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-}
-
-.live-value {
-    font-size: 9px;
-    color: #990000;
-    font-weight: bold;
-    margin-bottom: 2px;
-    font-family: 'Tahoma', sans-serif;
-}
-
-.live-bar {
-    width: 100%;
-    background: linear-gradient(to bottom, #ff6b35, #d93025);
-    border: 1px solid #991a10;
-    border-radius: 0;
-    transition: height 0.5s ease-out;
 }
 
 /* =============================================
@@ -417,15 +387,12 @@ body::before {
 
 .sound-mode-box {
     padding: 7px 8px;
-    border-radius: 0;
     background: var(--xp-button-face);
     color: #444;
     font-size: 11px;
-    font-weight: normal;
     font-family: 'Tahoma', sans-serif;
     text-align: center;
     cursor: default;
-    /* XP raised button look */
     border-top: 1px solid #ffffff;
     border-left: 1px solid #ffffff;
     border-right: 1px solid var(--xp-button-dark-shadow);
@@ -435,7 +402,6 @@ body::before {
 }
 
 .sound-mode-box.active {
-    /* XP pressed/inset button look */
     background: #dbd8c8;
     border-top: 1px solid var(--xp-button-dark-shadow);
     border-left: 1px solid var(--xp-button-dark-shadow);
@@ -447,18 +413,8 @@ body::before {
 }
 
 /* =============================================
-   EVENTS PANEL
+   REFRESH BUTTON
    ============================================= */
-.events-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #aca899;
-}
-
-/* XP-style refresh button */
 .refresh-btn {
     background: linear-gradient(to bottom, #f5f4ef, #dbd8c8);
     border-top: 1px solid #ffffff;
@@ -467,7 +423,6 @@ body::before {
     border-bottom: 1px solid #716f64;
     color: #000;
     font-size: 14px;
-    border-radius: 0;
     width: 22px;
     height: 22px;
     cursor: pointer;
@@ -491,6 +446,9 @@ body::before {
     box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3);
 }
 
+/* =============================================
+   EVENT ROWS
+   ============================================= */
 .event-row {
     display: flex;
     align-items: center;
@@ -505,7 +463,6 @@ body::before {
 
 .severity-badge {
     padding: 2px 8px;
-    border-radius: 0;
     font-size: 10px;
     font-weight: bold;
     min-width: 48px;
@@ -535,22 +492,16 @@ body::before {
     margin-top: 10px;
 }
 
-.history-panel::before {
-    content: '📊  Historial d\'Aforament';
-}
-
 .history-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
-    margin-top: 8px;
+    padding: 8px 10px 10px 10px;
 }
 
-/* XP GroupBox / inset panel style */
 .stat-box {
     background: #ffffff;
     border: 2px inset #aca899;
-    border-radius: 0;
     padding: 10px 8px;
     display: flex;
     flex-direction: column;
@@ -585,7 +536,7 @@ body::before {
 }
 
 /* =============================================
-   ALERT FLASH — XP error dialog style
+   ALERT FLASH
    ============================================= */
 @keyframes flashAlert {
     0%   { box-shadow: 2px 2px 4px rgba(0,0,0,0.35), 0 0 0 0 rgba(217,48,37,0); }
@@ -597,18 +548,6 @@ body::before {
 .alert-flash {
     animation: flashAlert 1s ease;
 }
-
-/* =============================================
-   WINDOW TITLE OVERRIDES
-   Per-panel custom titles via data attribute
-   ============================================= */
-#sound-panel::before    { content: '🔊  Anàlisi de So'; }
-#events-panel::before   { content: '⚠️  Alertes de Contaminació'; }
-#video-container::before { content: '📹  Càmera en directe'; }
-
-/* Hide the events-header title since the ::before already shows it */
-#events-panel .events-header h3,
-#sound-panel .maps-header { display: none; }
 
 /* =============================================
    SCROLLBAR — XP style
@@ -632,116 +571,19 @@ body::before {
 }
 
 /* =============================================
-   LIVE CHART PANEL
-   ============================================= */
-#chart-panel {
-    margin-top: 10px;
-}
-
-#chart-panel::before {
-    content: '📈  Monitoratge en temps real — Aforament i Soroll';
-}
-
-.chart-panel-inner {
-    padding: 10px;
-}
-
-.chart-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
-
-.chart-legend {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 10px;
-    font-family: 'Tahoma', sans-serif;
-    color: #444;
-}
-
-.legend-dot {
-    width: 12px;
-    height: 3px;
-    border-radius: 0;
-}
-
-.chart-wrap {
-    background: #ffffff;
-    border: 2px inset #aca899;
-    padding: 8px;
-    position: relative;
-}
-
-#pollution-chart {
-    width: 100%;
-    height: 180px;
-    display: block;
-}
-
-.chart-axis-label {
-    font-size: 9px;
-    font-family: 'Tahoma', sans-serif;
-    color: #716f64;
-    margin-top: 4px;
-    text-align: right;
-}
-
-.chart-status-bar {
-    display: flex;
-    gap: 20px;
-    margin-top: 8px;
-    padding-top: 6px;
-    border-top: 1px solid #e4e1d2;
-}
-
-.chart-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.chart-stat-label {
-    font-size: 9px;
-    font-family: 'Tahoma', sans-serif;
-    color: #716f64;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.chart-stat-value {
-    font-size: 14px;
-    font-weight: bold;
-    font-family: 'Tahoma', sans-serif;
-    color: #000080;
-}
-
-/* =============================================
    RECOMMENDATIONS PANEL
    ============================================= */
 #rec-panel { margin-top: 10px; }
-#rec-panel::before { content: '💡  Recomanacions intel·ligents — Assistent de gestió urbana'; }
+
 .rec-panel-inner { padding: 10px 12px 12px 12px; }
-.rec-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-}
+
 .rec-score-row {
     display: flex;
     gap: 12px;
     align-items: stretch;
     margin-bottom: 12px;
 }
+
 .rec-score-box {
     display: flex;
     flex-direction: column;
@@ -755,6 +597,7 @@ body::before {
     text-align: center;
     transition: background 0.4s, border-color 0.4s;
 }
+
 .rec-score-label {
     font-size: 9px;
     font-family: 'Tahoma', sans-serif;
@@ -762,6 +605,7 @@ body::before {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+
 .rec-score-value {
     font-size: 28px;
     font-weight: bold;
@@ -769,6 +613,7 @@ body::before {
     color: #000080;
     line-height: 1;
 }
+
 .rec-score-tag {
     font-size: 11px;
     font-weight: bold;
@@ -776,6 +621,7 @@ body::before {
     color: #137333;
     transition: color 0.4s;
 }
+
 .rec-main {
     display: flex;
     align-items: center;
@@ -785,8 +631,11 @@ body::before {
     border: 2px inset #aca899;
     padding: 10px 12px;
 }
+
 .rec-icon { font-size: 28px; line-height: 1; }
+
 .rec-text { display: flex; flex-direction: column; gap: 4px; }
+
 .rec-title {
     margin: 0;
     font-size: 13px;
@@ -795,6 +644,7 @@ body::before {
     color: #137333;
     transition: color 0.4s;
 }
+
 .rec-desc {
     margin: 0;
     font-size: 11px;
@@ -802,6 +652,7 @@ body::before {
     color: #444;
     line-height: 1.5;
 }
+
 .rec-actions-title {
     font-size: 10px;
     font-family: 'Tahoma', sans-serif;
@@ -811,11 +662,13 @@ body::before {
     letter-spacing: 0.5px;
     margin-bottom: 6px;
 }
+
 .rec-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
+
 .rec-action-btn {
     padding: 5px 12px;
     font-size: 11px;
@@ -829,6 +682,7 @@ body::before {
     cursor: default;
     color: #000;
 }
+
 .rec-pause-btn {
     padding: 3px 10px;
     font-size: 11px;
@@ -842,6 +696,7 @@ body::before {
     cursor: pointer;
     color: #000;
 }
+
 .rec-pause-btn:active {
     border-top: 1px solid #716f64;
     border-left: 1px solid #716f64;
@@ -849,6 +704,7 @@ body::before {
     border-bottom: 1px solid #ffffff;
     box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3);
 }
+
 .rec-action-btn.disabled { color: #aca899; font-style: italic; }
 
 /* =============================================
@@ -856,7 +712,57 @@ body::before {
    ============================================= */
 @media (max-width: 900px) {
     .main-content { flex-direction: column; }
-    #dynamicIframe { min-height: 260px; }
+    .left-column { width: 100%; }
     .history-stats { grid-template-columns: repeat(2, 1fr); }
     body::before { display: none; }
+}
+
+/* =============================================
+   DARK MODE
+   ============================================= */
+body.dark {
+    --xp-panel-bg: #1e1e1e;
+    --xp-button-face: #2d2d2d;
+    --xp-button-dark-shadow: #000;
+    --xp-desktop: #1a1a2e;
+    --xp-text: #e0e0e0;
+    background-color: #1a1a2e;
+}
+
+body.dark .container {
+    background: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.dark .stat-box,
+body.dark .rec-main {
+    background: #1e1e1e;
+    color: #e0e0e0;
+}
+
+body.dark .stat-value,
+body.dark .big-number,
+body.dark .status-text,
+body.dark .secondary-title {
+    color: #a0c4ff;
+}
+
+body.dark .event-row {
+    border-color: #444;
+}
+
+body.dark .feedback-text,
+body.dark .time-update,
+body.dark .stat-label {
+    color: #aaa;
+}
+
+body.dark .events-header,
+body.dark .sound-header,
+body.dark .video-live-bar,
+body.dark .chart-live-bar,
+body.dark .rec-header {
+    background: #252525;
+    border-color: #444;
 }

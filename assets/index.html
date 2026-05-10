@@ -10,82 +10,97 @@
     <div class="app-wrapper">
         <div class="header">
             <h1 class="arduino-text">Street Listener</h1>
+            <button onclick="toggleDarkMode()" id="dark-mode-btn">🌙</button>
             <div class="location-badge">📍 Biblioteca Central</div>
         </div>
+
         <div class="main-content">
-            <div class="container" id="video-container">
-                <div id="videoFeedContainer">
-                  <div id="videoPlaceholder" class="camera-status">
-                    <p class="feedback-text">Connectant amb la càmera...</p>
-                  </div>
-                  <div style="border: 4px solid #0a246a; box-shadow: inset 0 0 0 2px #ffffff, inset 0 0 0 3px #4a6fcd; width: 100%; height: 100%; box-sizing: border-box;">
-                    <iframe id="dynamicIframe" title="Video stream" frameBorder="0" style="display: none;"></iframe>
-                  </div>
-                </div>
-            </div>
-            <div class="right-column">
-                <div class="container maps-card">
-                    <div class="maps-header">
-                        <div class="live-indicator">
-                            <span class="pulse-dot"></span>
-                            <span class="live-text">EN DIRECTE</span>
-                        </div>
+
+            <!-- LEFT COLUMN: Alerts + Sound (vertical) -->
+            <div class="left-column">
+
+                <!-- DB EVENTS PANEL -->
+                <div class="container" id="events-panel">
+                    <div class="events-header">
+                        <button class="refresh-btn" onclick="fetchEvents()">↻</button>
                     </div>
-                    <h2 id="status-text" class="status-text">Analitzant l'espai...</h2>
-                  <div class="chart-controls" style="margin-bottom: 10px; display: flex; gap: 8px;">
-                      <button onclick="canviarRang('segons')" id="btn-segons" class="active">Segons</button>
-                      <button onclick="canviarRang('hora')" id="btn-hora">Hora</button>
-                      <button onclick="canviarRang('setmana')" id="btn-setmana">Setmana</button>
-                  </div>
-                    <div style="height: 200px; margin-top: 16px;">
-                        <canvas id="aforamentChart"></canvas>
-                    </div>
-                    
-                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                  
-                    <div class="stats-footer">
-                        <p class="live-count"><span id="person-count" class="big-number">0</span> persones ara mateix</p>
-                        <p id="time-update" class="time-update">Esperant dades...</p>
+                    <div id="events-list" class="panel-inner">
+                        <p class="feedback-text">Carregant alertes...</p>
                     </div>
                 </div>
 
                 <!-- SOUND PANEL -->
-                <div class="container maps-card" id="sound-panel">
-                    <div class="maps-header">
+                <div class="container" id="sound-panel">
+                    <div class="sound-header">
                         <div class="live-indicator" id="sound-indicator">
                             <span class="pulse-dot" style="background-color:#1a73e8"></span>
                             <span class="live-text" style="color:#1a73e8">EN DIRECTE</span>
                         </div>
                     </div>
-                    <h2 id="sound-status" class="status-text">Analitzant so...</h2>
-                    <div class="sound-mode-grid">
-                        <div class="sound-mode-box" id="mode-silence">🔇 Silenci</div>
-                        <div class="sound-mode-box" id="mode-naturalcrowd">🗣️ Ambient</div>
-                        <div class="sound-mode-box" id="mode-crowd">👥 Multitud</div>
-                        <div class="sound-mode-box" id="mode-squeak">📢 Soroll agut</div>
+                    <div class="panel-inner">
+                        <h2 id="sound-status" class="status-text">Analitzant so...</h2>
+                        <div class="sound-mode-grid">
+                            <div class="sound-mode-box" id="mode-silence">🔇 Silenci</div>
+                            <div class="sound-mode-box" id="mode-naturalcrowd">🗣️ Ambient</div>
+                            <div class="sound-mode-box" id="mode-crowd">👥 Multitud</div>
+                            <div class="sound-mode-box" id="mode-squeak">📢 Soroll agut</div>
+                        </div>
+                        <p id="sound-time" class="time-update">Esperant dades...</p>
                     </div>
-                    <p id="sound-time" class="time-update">Esperant dades...</p>
                 </div>
 
-                <!-- DB EVENTS PANEL -->
-                <div class="container maps-card" id="events-panel">
-                    <div class="events-header">
-                        <h3 class="secondary-title">⚠️ Alertes de Contaminació</h3>
-                        <button class="refresh-btn" onclick="fetchEvents()">↻</button>
+            </div>
+
+            <!-- RIGHT COLUMN: Camera + chart -->
+            <div class="right-column">
+
+                <!-- VIDEO PANEL -->
+                <div class="container" id="video-container">
+                    <div class="video-live-bar">
+                        <div class="live-indicator">
+                            <span class="pulse-dot"></span>
+                            <span class="live-text">EN DIRECTE</span>
+                        </div>
                     </div>
-                    <div id="events-list">
-                        <p class="feedback-text">Carregant alertes...</p>
+                    <div id="videoFeedContainer">
+                        <div id="videoPlaceholder" class="camera-status">
+                            <p class="feedback-text">Connectant amb la càmera...</p>
+                        </div>
+                        <iframe id="dynamicIframe" title="Video stream" frameBorder="0" scrolling="no" style="display: none;"></iframe>
                     </div>
                 </div>
+
+                <!-- CHART PANEL -->
+                <div class="container maps-card" id="chart-panel-card">
+                    <div class="chart-live-bar">
+                        <div class="live-indicator">
+                            <span class="pulse-dot"></span>
+                            <span class="live-text">EN DIRECTE</span>
+                        </div>
+                    </div>
+                    <div class="panel-inner">
+                        <h2 id="status-text" class="status-text">Analitzant l'espai...</h2>
+                        <div class="chart-controls" style="margin-bottom: 10px; display: flex; gap: 8px;">
+                            <button onclick="canviarRang('segons')" id="btn-segons" class="active">Segons</button>
+                            <button onclick="canviarRang('hora')" id="btn-hora">Hora</button>
+                            <button onclick="canviarRang('setmana')" id="btn-setmana">Setmana</button>
+                        </div>
+                        <div style="height: 200px; margin-top: 16px;">
+                            <canvas id="aforamentChart"></canvas>
+                        </div>
+                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                        <div class="stats-footer">
+                            <p class="live-count"><span id="person-count" class="big-number">0</span> persones ara mateix</p>
+                            <p id="time-update" class="time-update">Esperant dades...</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
         <!-- DB HISTORY TABLE -->
         <div class="container history-panel">
-            <div class="events-header">
-                <h3 class="secondary-title">📊 Historial d'Aforament</h3>
-                <button class="refresh-btn" onclick="fetchStats()">↻</button>
-            </div>
             <div id="history-stats" class="history-stats">
                 <div class="stat-box">
                     <span class="stat-label">Total registres</span>
@@ -108,16 +123,15 @@
 
         <!-- RECOMMENDATIONS PANEL -->
         <div class="container" id="rec-panel">
-            <div class="rec-panel-inner">
-                <div class="rec-header">
-                    <div class="live-indicator">
-                        <span class="pulse-dot" style="background:#3a9620;border-color:#1a5c08;"></span>
-                        <span class="live-text">ASSISTENT ACTIU</span>
-                    </div>
-                    <button class="rec-pause-btn" id="rec-pause-btn" onclick="toggleRecPause()">⏸ Pausar</button>
-                    <span id="rec-timestamp" class="time-update">Esperant dades...</span>
+            <div class="rec-header">
+                <div class="live-indicator">
+                    <span class="pulse-dot" style="background:#3a9620;border-color:#1a5c08;"></span>
+                    <span class="live-text">ASSISTENT ACTIU</span>
                 </div>
-
+                <button class="rec-pause-btn" id="rec-pause-btn" onclick="toggleRecPause()">⏸ Pausar</button>
+                <span id="rec-timestamp" class="time-update">Esperant dades...</span>
+            </div>
+            <div class="rec-panel-inner">
                 <div class="rec-score-row">
                     <div class="rec-score-box" id="rec-score-box">
                         <span class="rec-score-label">Índex de contaminació</span>
@@ -132,7 +146,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="rec-actions-title">Accions recomanades</div>
                 <div class="rec-actions" id="rec-actions">
                     <div class="rec-action-btn disabled">Esperant dades...</div>

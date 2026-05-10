@@ -4,6 +4,18 @@
 
 const socket = io(`http://${window.location.host}`);
 
+function toggleDarkMode() {
+    const isDark = document.body.classList.toggle('dark');
+    localStorage.setItem('darkMode', isDark);
+    document.getElementById('dark-mode-btn').textContent = isDark ? '☀️' : '🌙';
+}
+
+// Load preference on start
+if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark');
+    document.getElementById('dark-mode-btn').textContent = '☀️';
+}
+
 const SEVERITY_COLORS = {
     low:      { bg: '#e6f4ea', text: '#137333', label: 'Baix' },
     medium:   { bg: '#fef7e0', text: '#b06000', label: 'Mitjà' },
@@ -99,7 +111,7 @@ async function fetchEvents() {
         const res = await fetch(`http://${window.location.host}/api/events`);
         const data = await res.json();
 
-        renderEvents((data.events || []).slice(0, 5));
+        renderEvents((data.events || []).slice(0, 20));
 
     } catch (e) {
         document.getElementById('events-list').innerHTML =
