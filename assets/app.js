@@ -18,11 +18,35 @@ const DENSITY_LABELS = {
 };
 
 const SOUND_LABELS = {
-    silence:     { label: "Silenci",         color: "#137333", bg: "#e6f4ea" },
-    naturalcrowd:{ label: "Ambient normal",  color: "#1a73e8", bg: "#e8f0fe" },
-    crowd:       { label: "Multitud",        color: "#b06000", bg: "#fef7e0" },
-    squeak:      { label: "Soroll agut",     color: "#c5221f", bg: "#fce8e6" }
+    silence:      { label: "Silenci",        color: "#137333", bg: "#e6f4ea" },
+    naturalcrowd: { label: "Ambient normal", color: "#1a73e8", bg: "#e8f0fe" },
+    crowd:        { label: "Multitud",       color: "#b06000", bg: "#fef7e0" },
+    squeak:       { label: "Soroll agut",    color: "#c5221f", bg: "#fce8e6" }
 };
+
+let modeActual = 'segons';
+
+let aforamentChart = null;
+const MAX_PUNTS = 15;
+
+// CANVI RANG GRAFICA
+function canviarRang(nouMode) {
+    modeActual = nouMode;
+
+    document.querySelectorAll('.chart-controls button')
+        .forEach(btn => btn.classList.remove('active'));
+
+    document.getElementById(`btn-${nouMode}`)?.classList.add('active');
+
+    aforamentChart.data.labels = [];
+    aforamentChart.data.datasets[0].data = [];
+
+    if (nouMode === 'segons') {
+        aforamentChart.update();
+    } else {
+        carregarDadesHistoriques(nouMode);
+    }
+}
 
 // --- HELPERS ---
 function getDensityElement() {
@@ -31,20 +55,52 @@ function getDensityElement() {
 
 function updateDensity(level, color) {
     const densityEl = getDensityElement();
+
     if (!densityEl) {
         console.error('Element with id="current-density" not found');
         return;
     }
+
     densityEl.textContent = level;
     densityEl.style.color = color;
 }
 
 // --- DB FETCH FUNCTIONS ---
+async function carregarDadesHistoriques(rang) {
+    const url = `/api/history/${rang}`;
+
+    try {
+        const response = await fetch(url);
+        const text = await response.text();
+
+        try {
+            const json = JSON.parse(text);
+            const dades = json.data;
+
+            if (dades && dades.length > 0) {
+                aforamentChart.data.labels = dades.map(d => d.timestamp);
+                aforamentChart.data.datasets[0].data = dades.map(d => d.count);
+                aforamentChart.update();
+            } else {
+                console.warn("No hi ha dades per a aquest rang.");
+            }
+
+        } catch (e) {
+            console.error("El servidor no ha enviat JSON. Ha enviat:", text);
+        }
+
+    } catch (e) {
+        console.error("Error de connexió:", e);
+    }
+}
+
 async function fetchEvents() {
     try {
         const res = await fetch(`http://${window.location.host}/api/events`);
         const data = await res.json();
-        renderEvents((data.events || []).slice(0,5));
+
+        renderEvents((data.events || []).slice(0, 5));
+
     } catch (e) {
         document.getElementById('events-list').innerHTML =
             '<p class="feedback-text">Error carregant alertes.</p>';
@@ -78,6 +134,7 @@ function renderEvents(events) {
     list.innerHTML = events.map(ev => {
         const s = SEVERITY_COLORS[ev.severity] || SEVERITY_COLORS.low;
         const time = new Date(ev.triggered_at).toLocaleString('ca-ES');
+
         return `
             <div class="event-row">
                 <span class="severity-badge" style="background:${s.bg};color:${s.text}">
@@ -90,9 +147,12 @@ function renderEvents(events) {
     }).join('');
 
     if (events[0]) {
-        const time = new Date(events[0].triggered_at).toLocaleTimeString('ca-ES');
+        const time = new Date(events[0].triggered_at)
+            .toLocaleTimeString('ca-ES');
+
         const lastAlertEl = document.getElementById('last-alert');
         const s = SEVERITY_COLORS[events[0].severity] || SEVERITY_COLORS.low;
+
         lastAlertEl.textContent = time;
         lastAlertEl.style.color = s.text;
     }
@@ -104,46 +164,92 @@ let lastSound = 'silence';
 let recPaused = false;
 
 function computeRecommendation(crowd, sound) {
-    const soundScore = { silence: 0, naturalcrowd: 1, crowd: 2, squeak: 3 };
-    const crowdScore = crowd >= 5 ? 3 : crowd >= 3 ? 2 : crowd >= 1 ? 1 : 0;
+
+    const soundScore = {
+        silence: 0,
+        naturalcrowd: 1,
+        crowd: 2,
+        squeak: 3
+    };
+
+    const crowdScore =
+        crowd >= 5 ? 3 :
+        crowd >= 3 ? 2 :
+        crowd >= 1 ? 1 : 0;
+
     const total = Math.min((soundScore[sound] ?? 0) + crowdScore, 5);
 
     const levels = [
         {
-            tag: 'Òptim', color: '#137333', bg: '#e6f4ea', icon: '🟢',
+            tag: 'Òptim',
+            color: '#137333',
+            bg: '#e6f4ea',
+            icon: '🟢',
             title: 'Ambient ideal',
             desc: 'Nivells de soroll i aforament dins dels paràmetres òptims. No cal cap intervenció.',
             actions: ['Mantenir condicions actuals', 'Registrar com a referència']
         },
         {
-            tag: 'Acceptable', color: '#1a73e8', bg: '#e8f0fe', icon: '🔵',
+            tag: 'Acceptable',
+            color: '#1a73e8',
+            bg: '#e8f0fe',
+            icon: '🔵',
             title: 'Situació normal',
             desc: "L'espai funciona amb normalitat. Monitoratge de rutina recomanat.",
             actions: ['Continuar monitoratge', 'Revisar en 15 minuts']
         },
         {
-            tag: 'Atenció', color: '#b06000', bg: '#fef7e0', icon: '🟡',
+            tag: 'Atenció',
+            color: '#b06000',
+            bg: '#fef7e0',
+            icon: '🟡',
             title: 'Nivells moderats detectats',
             desc: "L'aforament o el soroll comencen a superar els límits recomanats.",
-            actions: ['Activar ventilació addicional', 'Avisar personal de gestió', 'Limitar accés temporal']
+            actions: [
+                'Activar ventilació addicional',
+                'Avisar personal de gestió',
+                'Limitar accés temporal'
+            ]
         },
         {
-            tag: 'Alerta', color: '#c5221f', bg: '#fce8e6', icon: '🟠',
+            tag: 'Alerta',
+            color: '#c5221f',
+            bg: '#fce8e6',
+            icon: '🟠',
             title: 'Contaminació acústica elevada',
             desc: 'Soroll i/o aglomeració fora dels paràmetres saludables. Cal intervenció.',
-            actions: ['Redirigir flux de persones', "Activar senyalització d'aforament", 'Notificar autoritats locals']
+            actions: [
+                'Redirigir flux de persones',
+                "Activar senyalització d'aforament",
+                'Notificar autoritats locals'
+            ]
         },
         {
-            tag: 'Crític', color: '#990000', bg: '#fce8e6', icon: '🔴',
+            tag: 'Crític',
+            color: '#990000',
+            bg: '#fce8e6',
+            icon: '🔴',
             title: 'Situació crítica — Intervenció immediata',
             desc: 'Nivells crítics de soroll i massificació. Risc per al benestar públic.',
-            actions: ['Tancar accés a la zona', "Activar protocol d'emergència", "Contactar serveis d'ordre públic", 'Emetre alerta sonora']
+            actions: [
+                'Tancar accés a la zona',
+                "Activar protocol d'emergència",
+                "Contactar serveis d'ordre públic",
+                'Emetre alerta sonora'
+            ]
         },
         {
-            tag: 'Extrem', color: '#4a0000', bg: '#fce8e6', icon: '⛔',
+            tag: 'Extrem',
+            color: '#4a0000',
+            bg: '#fce8e6',
+            icon: '⛔',
             title: 'Nivell extrem — Evacuació recomanada',
             desc: "Situació insostenible. S'han superat tots els llindars de seguretat.",
-            actions: ['Iniciar evacuació controlada', 'Tallar accés perimetral', 'Alertar protecció civil']
+            actions: [
+                'Iniciar evacuació controlada',
+                'Tallar accés perimetral',
+                'Alertar protecció civil'
+            ]
         }
     ];
 
@@ -151,22 +257,27 @@ function computeRecommendation(crowd, sound) {
 }
 
 function renderRecommendation(crowd, sound) {
+
     if (recPaused) return;
+
     const { score, level } = computeRecommendation(crowd, sound);
 
     const scoreBox = document.getElementById('rec-score-box');
+
     scoreBox.style.background = level.bg;
     scoreBox.style.borderColor = level.color;
 
     document.getElementById('rec-score').textContent = score + '/5';
 
     const tag = document.getElementById('rec-score-tag');
+
     tag.textContent = level.tag;
     tag.style.color = level.color;
 
     document.getElementById('rec-icon').textContent = level.icon;
 
     const title = document.getElementById('rec-title');
+
     title.textContent = level.title;
     title.style.color = level.color;
 
@@ -177,92 +288,243 @@ function renderRecommendation(crowd, sound) {
         .join('');
 
     const now = new Date().toLocaleTimeString('ca-ES');
-    document.getElementById('rec-timestamp').textContent = `Actualitzat a les ${now}`;
+
+    document.getElementById('rec-timestamp').textContent =
+        `Actualitzat a les ${now}`;
 }
 
 function toggleRecPause() {
+
     recPaused = !recPaused;
+
     const btn = document.getElementById('rec-pause-btn');
+
     if (recPaused) {
+
         btn.textContent = '▶ Reprendre';
-        document.querySelector('#rec-panel .live-text').textContent = 'ASSISTENT APAGAT';
-        document.querySelector('#rec-panel .live-text').style.color = '#d93025';
-        document.querySelector('#rec-panel .pulse-dot').style.background = '#d93025';
-        document.querySelector('#rec-panel .pulse-dot').style.animation = 'none';
+
+        document.querySelector('#rec-panel .live-text').textContent =
+            'ASSISTENT APAGAT';
+
+        document.querySelector('#rec-panel .live-text').style.color =
+            '#d93025';
+
+        document.querySelector('#rec-panel .pulse-dot').style.background =
+            '#d93025';
+
+        document.querySelector('#rec-panel .pulse-dot').style.animation =
+            'none';
+
         document.getElementById('rec-score').textContent = '';
         document.getElementById('rec-score-tag').textContent = '';
-        document.getElementById('rec-score-box').style.background = '#ece9d8';
-        document.getElementById('rec-score-box').style.borderColor = '#aca899';
-        document.getElementById('rec-score-tag').style.color = '#716f64';
+
+        document.getElementById('rec-score-box').style.background =
+            '#ece9d8';
+
+        document.getElementById('rec-score-box').style.borderColor =
+            '#aca899';
+
+        document.getElementById('rec-score-tag').style.color =
+            '#716f64';
+
         document.getElementById('rec-icon').textContent = '⏸';
-        document.getElementById('rec-title').textContent = 'Assistent pausat';
-        document.getElementById('rec-title').style.color = '#716f64';
-        document.getElementById('rec-desc').textContent = 'Les recomanacions estan desactivades. Prem Reprendre per continuar.';
-        document.getElementById('rec-actions').innerHTML = '<div class="rec-action-btn disabled">—</div>';
+
+        document.getElementById('rec-title').textContent =
+            'Assistent pausat';
+
+        document.getElementById('rec-title').style.color =
+            '#716f64';
+
+        document.getElementById('rec-desc').textContent =
+            'Les recomanacions estan desactivades. Prem Reprendre per continuar.';
+
+        document.getElementById('rec-actions').innerHTML =
+            '<div class="rec-action-btn disabled">—</div>';
+
     } else {
-        document.querySelector('#rec-panel .live-text').textContent = 'ASSISTENT ACTIU';
-        document.querySelector('#rec-panel .live-text').style.color = '#228B22';
-        document.querySelector('#rec-panel .pulse-dot').style.background = '#3a9620';
-        document.querySelector('#rec-panel .pulse-dot').style.animation = '';
+
+        document.querySelector('#rec-panel .live-text').textContent =
+            'ASSISTENT ACTIU';
+
+        document.querySelector('#rec-panel .live-text').style.color =
+            '#228B22';
+
+        document.querySelector('#rec-panel .pulse-dot').style.background =
+            '#3a9620';
+
+        document.querySelector('#rec-panel .pulse-dot').style.animation =
+            '';
+
         btn.textContent = '⏸ Pausar';
+
         renderRecommendation(lastCrowd, lastSound);
     }
 }
 
 // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
+
     initSocketIO();
+
     fetchEvents();
     fetchStats();
-    document.querySelector('#rec-panel .live-text').style.color = '#228B22';
+
+    // Initial assistant UI state
+    document.querySelector('#rec-panel .live-text').style.color =
+        '#228B22';
+
+    document.querySelector('#rec-panel .pulse-dot').style.background =
+        '#3a9620';
 
     setInterval(fetchEvents, 30000);
     setInterval(fetchStats, 30000);
 });
 
+function inicialitzarGrafica() {
+
+    const canvas = document.getElementById('aforamentChart');
+
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    aforamentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Aforament',
+                data: [],
+                borderColor: '#1a73e8',
+                backgroundColor: 'rgba(26, 115, 232, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: 5,
+                    ticks: { stepSize: 1 }
+                },
+                x: {
+                    display: true
+                }
+            }
+        }
+    });
+}
+
 // --- SOCKET ---
 function initSocketIO() {
+
+    inicialitzarGrafica();
+
     socket.on('update_aforament', (message) => {
+
         const persones = message.aforament;
+
+        const horaFormat = new Date(message.timestamp)
+            .toLocaleTimeString('ca-ES', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
 
         const statusText  = document.getElementById('status-text');
         const personCount = document.getElementById('person-count');
         const timeUpdate  = document.getElementById('time-update');
         const liveBar     = document.getElementById('live-bar');
 
-        personCount.textContent = persones;
-
-        if (persones >= 3) {
-            updateDensity('Alta', '#c5221f');
-            statusText.textContent = "Molt concorregut";
-        } else if (persones >= 2) {
-            updateDensity('Mitjana', '#b06000');
-            statusText.textContent = "Força concorregut";
-        } else if (persones >= 1) {
-            updateDensity('Baixa', '#137333');
-            statusText.textContent = "Poc concorregut";
-        } else {
-            updateDensity('Buit', '#555555');
-            statusText.textContent = "Buit";
+        if (personCount) {
+            personCount.textContent = persones;
         }
 
-        let percentatge = (persones / 10) * 100;
-        if (percentatge > 100) percentatge = 100;
-        if (percentatge < 5 && persones > 0) percentatge = 5;
-        liveBar.style.height = `${percentatge}%`;
+        if (persones >= 3) {
 
-        const hora = new Date(message.timestamp).toLocaleTimeString('ca-ES');
-        timeUpdate.textContent = `Actualitzat a les ${hora}`;
+            updateDensity('Alta', '#c5221f');
 
-        // Update recommendations
+            if (statusText) {
+                statusText.textContent = "Molt concorregut";
+            }
+
+        } else if (persones >= 2) {
+
+            updateDensity('Mitjana', '#b06000');
+
+            if (statusText) {
+                statusText.textContent = "Força concorregut";
+            }
+
+        } else if (persones >= 1) {
+
+            updateDensity('Baixa', '#137333');
+
+            if (statusText) {
+                statusText.textContent = "Poc concorregut";
+            }
+
+        } else {
+
+            updateDensity('Buit', '#555555');
+
+            if (statusText) {
+                statusText.textContent = "Buit";
+            }
+        }
+
+        // LIVE BAR
+        if (liveBar) {
+
+            let percentatge = (persones / 10) * 100;
+
+            if (percentatge > 100) percentatge = 100;
+            if (percentatge < 5 && persones > 0) percentatge = 5;
+
+            liveBar.style.height = `${percentatge}%`;
+        }
+
+        // LAST UPDATE
+        if (timeUpdate) {
+            timeUpdate.textContent =
+                `Actualitzat a les ${horaFormat}`;
+        }
+
+        // GRAPH UPDATE
+        if (modeActual === 'segons' && aforamentChart) {
+
+            aforamentChart.data.labels.push(horaFormat);
+
+            aforamentChart.data.datasets[0].data.push(persones);
+
+            if (aforamentChart.data.labels.length > MAX_PUNTS) {
+
+                aforamentChart.data.labels.shift();
+
+                aforamentChart.data.datasets[0].data.shift();
+            }
+
+            aforamentChart.update('none');
+        }
+
+        // RECOMMENDATIONS
         lastCrowd = persones;
         renderRecommendation(lastCrowd, lastSound);
     });
 
     socket.on('update_sound', (message) => {
+
         const s = SOUND_LABELS[message.mode] || SOUND_LABELS.silence;
 
-        document.getElementById('sound-status').textContent = s.label;
+        const statusEl = document.getElementById('sound-status');
+
+        if (statusEl) {
+            statusEl.textContent = s.label;
+        }
 
         document.querySelectorAll('.sound-mode-box').forEach(el => {
             el.classList.remove('active');
@@ -272,6 +534,7 @@ function initSocketIO() {
         });
 
         const activeBox = document.getElementById(`mode-${message.mode}`);
+
         if (activeBox) {
             activeBox.classList.add('active');
             activeBox.style.background = s.bg;
@@ -279,18 +542,32 @@ function initSocketIO() {
             activeBox.style.fontWeight = '700';
         }
 
-        const hora = new Date(message.timestamp).toLocaleTimeString('ca-ES');
-        document.getElementById('sound-time').textContent = `Actualitzat a les ${hora}`;
+        const horaSo = new Date(message.timestamp)
+            .toLocaleTimeString('ca-ES');
 
-        // Update recommendations
+        const timeSoEl = document.getElementById('sound-time');
+
+        if (timeSoEl) {
+            timeSoEl.textContent = `Actualitzat a les ${horaSo}`;
+        }
+
+        // RECOMMENDATIONS
         lastSound = message.mode;
         renderRecommendation(lastCrowd, lastSound);
     });
 
     socket.on('alert', () => {
+
         const panel = document.getElementById('events-panel');
-        panel.classList.add('alert-flash');
-        setTimeout(() => { panel.classList.remove('alert-flash'); }, 1000);
+
+        if (panel) {
+            panel.classList.add('alert-flash');
+
+            setTimeout(() => {
+                panel.classList.remove('alert-flash');
+            }, 1000);
+        }
+
         fetchEvents();
         fetchStats();
     });
