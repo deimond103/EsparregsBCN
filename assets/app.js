@@ -5,23 +5,23 @@
 const socket = io(`http://${window.location.host}`);
 
 const SEVERITY_COLORS = {
-    low: { bg: '#e6f4ea', text: '#137333', label: 'Baix' },
-    medium: { bg: '#fef7e0', text: '#b06000', label: 'Mitjà' },
-    high: { bg: '#fce8e6', text: '#c5221f', label: 'Alt' },
+    low:      { bg: '#e6f4ea', text: '#137333', label: 'Baix' },
+    medium:   { bg: '#fef7e0', text: '#b06000', label: 'Mitjà' },
+    high:     { bg: '#fce8e6', text: '#c5221f', label: 'Alt' },
     critical: { bg: '#fce8e6', text: '#c5221f', label: 'Crític' }
 };
 
 const DENSITY_LABELS = {
-    low: 'Baixa',
+    low:    'Baixa',
     medium: 'Mitjana',
-    high: 'Alta'
+    high:   'Alta'
 };
 
 const SOUND_LABELS = {
-    silence: { label: "Silenci", color: "#137333", bg: "#e6f4ea" },
-    naturalcrowd: { label: "Ambient normal", color: "#1a73e8", bg: "#e8f0fe" },
-    crowd: { label: "Multitud", color: "#b06000", bg: "#fef7e0" },
-    squeak: { label: "Soroll agut", color: "#c5221f", bg: "#fce8e6" }
+    silence:     { label: "Silenci",         color: "#137333", bg: "#e6f4ea" },
+    naturalcrowd:{ label: "Ambient normal",  color: "#1a73e8", bg: "#e8f0fe" },
+    crowd:       { label: "Multitud",        color: "#b06000", bg: "#fef7e0" },
+    squeak:      { label: "Soroll agut",     color: "#c5221f", bg: "#fce8e6" }
 };
 
 // --- HELPERS ---
@@ -31,12 +31,10 @@ function getDensityElement() {
 
 function updateDensity(level, color) {
     const densityEl = getDensityElement();
-
     if (!densityEl) {
         console.error('Element with id="current-density" not found');
         return;
     }
-
     densityEl.textContent = level;
     densityEl.style.color = color;
 }
@@ -46,7 +44,7 @@ async function fetchEvents() {
     try {
         const res = await fetch(`http://${window.location.host}/api/events`);
         const data = await res.json();
-        renderEvents(data.events || []);
+        renderEvents((data.events || []).slice(0,5));
     } catch (e) {
         document.getElementById('events-list').innerHTML =
             '<p class="feedback-text">Error carregant alertes.</p>';
@@ -62,9 +60,7 @@ async function fetchStats() {
             data.total ?? '—';
 
         document.getElementById('max-detected').textContent =
-            data.max_count != null
-                ? data.max_count + ' persones'
-                : '—';
+            data.max_count != null ? data.max_count + ' persones' : '—';
 
     } catch (e) {
         console.error('Error fetching stats:', e);
@@ -75,52 +71,141 @@ function renderEvents(events) {
     const list = document.getElementById('events-list');
 
     if (!events.length) {
-        list.innerHTML =
-            '<p class="feedback-text">Cap alerta registrada.</p>';
+        list.innerHTML = '<p class="feedback-text">Cap alerta registrada.</p>';
         return;
     }
 
-    list.innerHTML = events
-        .map(ev => {
-            const s =
-                SEVERITY_COLORS[ev.severity] ||
-                SEVERITY_COLORS.low;
-
-            const time = new Date(ev.triggered_at)
-                .toLocaleString('ca-ES');
-
-            return `
-                <div class="event-row">
-                    <span class="severity-badge"
-                        style="background:${s.bg};color:${s.text}">
-                        ${s.label}
-                    </span>
-
-                    <span class="event-detail">
-                        ${ev.crowd_count} persones
-                    </span>
-
-                    <span class="event-time">
-                        ${time}
-                    </span>
-                </div>
-            `;
-        })
-        .join('');
+    list.innerHTML = events.map(ev => {
+        const s = SEVERITY_COLORS[ev.severity] || SEVERITY_COLORS.low;
+        const time = new Date(ev.triggered_at).toLocaleString('ca-ES');
+        return `
+            <div class="event-row">
+                <span class="severity-badge" style="background:${s.bg};color:${s.text}">
+                    ${s.label}
+                </span>
+                <span class="event-detail">${ev.crowd_count} persones</span>
+                <span class="event-time">${time}</span>
+            </div>
+        `;
+    }).join('');
 
     if (events[0]) {
-        const time = new Date(events[0].triggered_at)
-            .toLocaleTimeString('ca-ES');
-
-        const lastAlertEl =
-            document.getElementById('last-alert');
-
-        const s =
-            SEVERITY_COLORS[events[0].severity] ||
-            SEVERITY_COLORS.low;
-
+        const time = new Date(events[0].triggered_at).toLocaleTimeString('ca-ES');
+        const lastAlertEl = document.getElementById('last-alert');
+        const s = SEVERITY_COLORS[events[0].severity] || SEVERITY_COLORS.low;
         lastAlertEl.textContent = time;
         lastAlertEl.style.color = s.text;
+    }
+}
+
+// --- RECOMMENDATIONS ENGINE ---
+let lastCrowd = 0;
+let lastSound = 'silence';
+let recPaused = false;
+
+function computeRecommendation(crowd, sound) {
+    const soundScore = { silence: 0, naturalcrowd: 1, crowd: 2, squeak: 3 };
+    const crowdScore = crowd >= 5 ? 3 : crowd >= 3 ? 2 : crowd >= 1 ? 1 : 0;
+    const total = Math.min((soundScore[sound] ?? 0) + crowdScore, 5);
+
+    const levels = [
+        {
+            tag: 'Òptim', color: '#137333', bg: '#e6f4ea', icon: '🟢',
+            title: 'Ambient ideal',
+            desc: 'Nivells de soroll i aforament dins dels paràmetres òptims. No cal cap intervenció.',
+            actions: ['Mantenir condicions actuals', 'Registrar com a referència']
+        },
+        {
+            tag: 'Acceptable', color: '#1a73e8', bg: '#e8f0fe', icon: '🔵',
+            title: 'Situació normal',
+            desc: "L'espai funciona amb normalitat. Monitoratge de rutina recomanat.",
+            actions: ['Continuar monitoratge', 'Revisar en 15 minuts']
+        },
+        {
+            tag: 'Atenció', color: '#b06000', bg: '#fef7e0', icon: '🟡',
+            title: 'Nivells moderats detectats',
+            desc: "L'aforament o el soroll comencen a superar els límits recomanats.",
+            actions: ['Activar ventilació addicional', 'Avisar personal de gestió', 'Limitar accés temporal']
+        },
+        {
+            tag: 'Alerta', color: '#c5221f', bg: '#fce8e6', icon: '🟠',
+            title: 'Contaminació acústica elevada',
+            desc: 'Soroll i/o aglomeració fora dels paràmetres saludables. Cal intervenció.',
+            actions: ['Redirigir flux de persones', "Activar senyalització d'aforament", 'Notificar autoritats locals']
+        },
+        {
+            tag: 'Crític', color: '#990000', bg: '#fce8e6', icon: '🔴',
+            title: 'Situació crítica — Intervenció immediata',
+            desc: 'Nivells crítics de soroll i massificació. Risc per al benestar públic.',
+            actions: ['Tancar accés a la zona', "Activar protocol d'emergència", "Contactar serveis d'ordre públic", 'Emetre alerta sonora']
+        },
+        {
+            tag: 'Extrem', color: '#4a0000', bg: '#fce8e6', icon: '⛔',
+            title: 'Nivell extrem — Evacuació recomanada',
+            desc: "Situació insostenible. S'han superat tots els llindars de seguretat.",
+            actions: ['Iniciar evacuació controlada', 'Tallar accés perimetral', 'Alertar protecció civil']
+        }
+    ];
+
+    return { score: total, level: levels[total] };
+}
+
+function renderRecommendation(crowd, sound) {
+    if (recPaused) return;
+    const { score, level } = computeRecommendation(crowd, sound);
+
+    const scoreBox = document.getElementById('rec-score-box');
+    scoreBox.style.background = level.bg;
+    scoreBox.style.borderColor = level.color;
+
+    document.getElementById('rec-score').textContent = score + '/5';
+
+    const tag = document.getElementById('rec-score-tag');
+    tag.textContent = level.tag;
+    tag.style.color = level.color;
+
+    document.getElementById('rec-icon').textContent = level.icon;
+
+    const title = document.getElementById('rec-title');
+    title.textContent = level.title;
+    title.style.color = level.color;
+
+    document.getElementById('rec-desc').textContent = level.desc;
+
+    document.getElementById('rec-actions').innerHTML = level.actions
+        .map(a => `<div class="rec-action-btn">${a}</div>`)
+        .join('');
+
+    const now = new Date().toLocaleTimeString('ca-ES');
+    document.getElementById('rec-timestamp').textContent = `Actualitzat a les ${now}`;
+}
+
+function toggleRecPause() {
+    recPaused = !recPaused;
+    const btn = document.getElementById('rec-pause-btn');
+    if (recPaused) {
+        btn.textContent = '▶ Reprendre';
+        document.querySelector('#rec-panel .live-text').textContent = 'ASSISTENT APAGAT';
+        document.querySelector('#rec-panel .live-text').style.color = '#d93025';
+        document.querySelector('#rec-panel .pulse-dot').style.background = '#d93025';
+        document.querySelector('#rec-panel .pulse-dot').style.animation = 'none';
+        document.getElementById('rec-score').textContent = '';
+        document.getElementById('rec-score-tag').textContent = '';
+        document.getElementById('rec-score-box').style.background = '#ece9d8';
+        document.getElementById('rec-score-box').style.borderColor = '#aca899';
+        document.getElementById('rec-score-tag').style.color = '#716f64';
+        document.getElementById('rec-icon').textContent = '⏸';
+        document.getElementById('rec-title').textContent = 'Assistent pausat';
+        document.getElementById('rec-title').style.color = '#716f64';
+        document.getElementById('rec-desc').textContent = 'Les recomanacions estan desactivades. Prem Reprendre per continuar.';
+        document.getElementById('rec-actions').innerHTML = '<div class="rec-action-btn disabled">—</div>';
+    } else {
+        document.querySelector('#rec-panel .live-text').textContent = 'ASSISTENT ACTIU';
+        document.querySelector('#rec-panel .live-text').style.color = '#228B22';
+        document.querySelector('#rec-panel .pulse-dot').style.background = '#3a9620';
+        document.querySelector('#rec-panel .pulse-dot').style.animation = '';
+        btn.textContent = '⏸ Pausar';
+        renderRecommendation(lastCrowd, lastSound);
     }
 }
 
@@ -129,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSocketIO();
     fetchEvents();
     fetchStats();
+    document.querySelector('#rec-panel .live-text').style.color = '#228B22';
 
     setInterval(fetchEvents, 30000);
     setInterval(fetchStats, 30000);
@@ -139,70 +225,53 @@ function initSocketIO() {
     socket.on('update_aforament', (message) => {
         const persones = message.aforament;
 
-        const statusText =
-            document.getElementById('status-text');
-
-        const personCount =
-            document.getElementById('person-count');
-
-        const timeUpdate =
-            document.getElementById('time-update');
-
-        const liveBar =
-            document.getElementById('live-bar');
+        const statusText  = document.getElementById('status-text');
+        const personCount = document.getElementById('person-count');
+        const timeUpdate  = document.getElementById('time-update');
+        const liveBar     = document.getElementById('live-bar');
 
         personCount.textContent = persones;
 
         if (persones >= 3) {
             updateDensity('Alta', '#c5221f');
             statusText.textContent = "Molt concorregut";
-
         } else if (persones >= 2) {
             updateDensity('Mitjana', '#b06000');
             statusText.textContent = "Força concorregut";
-
         } else if (persones >= 1) {
             updateDensity('Baixa', '#137333');
             statusText.textContent = "Poc concorregut";
-
         } else {
             updateDensity('Buit', '#555555');
             statusText.textContent = "Buit";
         }
 
         let percentatge = (persones / 10) * 100;
-
         if (percentatge > 100) percentatge = 100;
         if (percentatge < 5 && persones > 0) percentatge = 5;
-
         liveBar.style.height = `${percentatge}%`;
 
-        const hora = new Date(message.timestamp)
-            .toLocaleTimeString('ca-ES');
+        const hora = new Date(message.timestamp).toLocaleTimeString('ca-ES');
+        timeUpdate.textContent = `Actualitzat a les ${hora}`;
 
-        timeUpdate.textContent =
-            `Actualitzat a les ${hora}`;
+        // Update recommendations
+        lastCrowd = persones;
+        renderRecommendation(lastCrowd, lastSound);
     });
 
     socket.on('update_sound', (message) => {
-        const s =
-            SOUND_LABELS[message.mode] ||
-            SOUND_LABELS.silence;
+        const s = SOUND_LABELS[message.mode] || SOUND_LABELS.silence;
 
-        document.getElementById('sound-status')
-            .textContent = s.label;
+        document.getElementById('sound-status').textContent = s.label;
 
-        document.querySelectorAll('.sound-mode-box')
-            .forEach(el => {
-                el.classList.remove('active');
-                el.style.background = '';
-                el.style.color = '';
-                el.style.fontWeight = '';
-            });
+        document.querySelectorAll('.sound-mode-box').forEach(el => {
+            el.classList.remove('active');
+            el.style.background = '';
+            el.style.color = '';
+            el.style.fontWeight = '';
+        });
 
-        const activeBox =
-            document.getElementById(`mode-${message.mode}`);
-
+        const activeBox = document.getElementById(`mode-${message.mode}`);
         if (activeBox) {
             activeBox.classList.add('active');
             activeBox.style.background = s.bg;
@@ -210,23 +279,18 @@ function initSocketIO() {
             activeBox.style.fontWeight = '700';
         }
 
-        const hora = new Date(message.timestamp)
-            .toLocaleTimeString('ca-ES');
+        const hora = new Date(message.timestamp).toLocaleTimeString('ca-ES');
+        document.getElementById('sound-time').textContent = `Actualitzat a les ${hora}`;
 
-        document.getElementById('sound-time')
-            .textContent = `Actualitzat a les ${hora}`;
+        // Update recommendations
+        lastSound = message.mode;
+        renderRecommendation(lastCrowd, lastSound);
     });
 
     socket.on('alert', () => {
-        const panel =
-            document.getElementById('events-panel');
-
+        const panel = document.getElementById('events-panel');
         panel.classList.add('alert-flash');
-
-        setTimeout(() => {
-            panel.classList.remove('alert-flash');
-        }, 1000);
-
+        setTimeout(() => { panel.classList.remove('alert-flash'); }, 1000);
         fetchEvents();
         fetchStats();
     });
