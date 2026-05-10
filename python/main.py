@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (C) ARDUINO SRL (http://www.arduino.cc)
 #
 # SPDX-License-Identifier: MPL-2.0
-
 import os
 import sqlite3
 import random
@@ -103,7 +102,6 @@ def get_severity(person_count):
 # --- DETECTION CALLBACK ---
 def send_detections_to_ui(detections: dict):
     global ultima_lectura_persones
-
     llista_persones = detections.get("person", [])
     persones_vistes_ara = len(llista_persones)
     person_count = calcular_aforament_real(persones_vistes_ara)
@@ -140,7 +138,6 @@ def send_detections_to_ui(detections: dict):
         "timestamp": datetime.now(UTC).isoformat()
     }
     ui.send_message("update_aforament", message=entry)
-
     if severity and person_count > 0:
         ui.send_message("alert", {"severity": severity, "crowd_count": person_count})
 
@@ -279,10 +276,12 @@ ui.expose_api("GET", "/api/stats", api_stats)
 # --- INIT ---
 init_db()
 set_led('green')  # start green — all clear
+
 classifier = AudioClassification()
 classifier.on_detect("squeak", on_squeak)
 classifier.on_detect("naturalsqueak", on_squeak)
 classifier.on_detect("naturalcrowd", on_natural_crowd)
 classifier.on_detect("silence", on_silence)
 classifier.on_detect("crowd", on_crowd)
+
 App.run()
