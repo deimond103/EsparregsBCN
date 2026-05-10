@@ -8,27 +8,22 @@ from arduino.app_utils import App
 from arduino.app_bricks.web_ui import WebUI
 from arduino.app_bricks.video_objectdetection import VideoObjectDetection
 from arduino.app_bricks.audio_classification import AudioClassification
-
 from datetime import datetime, UTC
 
 ui = WebUI()
 detection_stream = VideoObjectDetection(confidence=0.5, debounce_sec=0.0)
 ui.on_message("override_th", lambda sid, threshold: detection_stream.override_threshold(threshold))
 
-# --- ESTRUCTURA DE DADES (LA "MEMÒRIA" DE LA CÀMERA) ---
+# --- ESTRUCTURA DE DADES ---
 historial_aforament = []
-MAX_BUFFER_PERSONES = 10  # Guarda les últimes 10 deteccions (aprox 2-3 segons)
-ultima_lectura_persones = 0 # Ho guardem per enviar-ho a la web quan ho demani
+MAX_BUFFER_PERSONES = 10
+ultima_lectura_persones = 0
 
 def calcular_aforament_real(lectura_actual):
     global historial_aforament
-    # Afegim la lectura d'aquest instant al registre
     historial_aforament.append(lectura_actual)
-    # Si la llista es fa massa llarga, esborrem el record més antic
     if len(historial_aforament) > MAX_BUFFER_PERSONES:
         historial_aforament.pop(0)
-    
-    # Retornem el màxim d'aquest espai de temps per evitar pèrdues de recompte
     return max(historial_aforament)
 
 # --- DB SETUP ---
@@ -55,11 +50,16 @@ def init_db():
             severity TEXT,
             triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS sound_readings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            mode TEXT NOT NULL,
+            label TEXT,
+            recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """)
     conn.commit()
     conn.close()
 
-# Nous nivells del teu company
 def get_severity(person_count):
     if person_count >= 4: return "critical"
     elif person_count >= 3: return "high"
@@ -70,12 +70,11 @@ def get_severity(person_count):
 # --- DETECTION CALLBACK ---
 def send_detections_to_ui(detections: dict):
     global ultima_lectura_persones
-    
-    # 1. Llegim la càmera i passem el filtre de memòria
+
     persones_vistes_ara = len(detections.get("person", []))
     person_count = calcular_aforament_real(persones_vistes_ara)
-    ultima_lectura_persones = person_count # Ho guardem a la global
-    
+    ultima_lectura_persones = person_count
+
     density = "high" if person_count >= 51 else "medium" if person_count >= 20 else "low"
 
     conn = get_db()
@@ -98,40 +97,83 @@ def send_detections_to_ui(detections: dict):
 
 detection_stream.on_detect_all(send_detections_to_ui)
 
-# --- SINCRONITZACIÓ AMB FRONTEND (AUDIO + GRÀFICS) ---
+# --- SINCRONITZACIÓ AMB FRONTEND ---
 def on_analitzar_entorn(sid, data):
     try:
         global ultima_lectura_persones
-        
-        # Simulem àudio (Mantingueu això actiu per la presentació)
+
         possibles_sons = ['Soroll de fons', 'Soroll de fons', 'Veus humanes', 'Sirena / Alarma']
         so_detectat = random.choice(possibles_sons)
         certesa_so = random.uniform(0.1, 0.45) if so_detectat == 'Soroll de fons' else random.uniform(0.7, 0.98)
-        
+
         persones = ultima_lectura_persones
-        
-        # Barres per al gràfic (Simulem prediccions en base a l'ocupació actual)
-        # Ajusto la capacitat a 10 persones per fer els percentatges de les barres
-        pct_actual = min((persones / 10) * 100, 100) 
-        
+        pct_actual = min((persones / 10) * 100, 100)
+
         prediccions = [
-            max(10, pct_actual - 20 + random.randint(-5, 5)), # -2h
-            max(15, pct_actual - 10 + random.randint(-5, 5)), # -1h
-            pct_actual,                                       # ACTUAL
-            min(100, pct_actual + 15 + random.randint(-5, 5)),# +1h
-            min(100, pct_actual + 5 + random.randint(-5, 5))  # +2h
+            max(10, pct_actual - 20 + random.randint(-5, 5)),
+            max(15, pct_actual - 10 + random.randint(-5, 5)),
+            pct_actual,
+            min(100, pct_actual + 15 + random.randint(-5, 5)),
+            min(100, pct_actual + 5 + random.randint(-5, 5))
         ]
 
         response_data = {
             'audio': { 'class_name': so_detectat, 'confidence': certesa_so },
             'aforament': { 'persones': persones, 'barres': prediccions }
         }
-        
+
         ui.send_message('update_dades', response_data, sid)
     except Exception as e:
         pass
 
 ui.on_message('analitzar_entorn', on_analitzar_entorn)
+
+# --- AUDIO STATE ---
+current_sound_mode = "silence"
+
+def on_squeak():
+    print(f"[AUDIO] squeak detected at {datetime.now(UTC).isoformat()}")
+    global current_sound_mode
+    current_sound_mode = "squeak"
+    conn = get_db()
+    conn.execute("INSERT INTO sound_readings (mode, label) VALUES (?, ?)", ("squeak", "Soroll agut"))
+    conn.commit()
+    conn.close()
+    ui.send_message("update_sound", {"mode": "squeak", "label": "Soroll agut", "timestamp": datetime.now(UTC).isoformat()})
+    print("SQUEAK!")
+
+def on_natural_crowd():
+    print(f"[AUDIO] naturalcrowd detected at {datetime.now(UTC).isoformat()}")
+    global current_sound_mode
+    current_sound_mode = "naturalcrowd"
+    conn = get_db()
+    conn.execute("INSERT INTO sound_readings (mode, label) VALUES (?, ?)", ("naturalcrowd", "Ambient normal"))
+    conn.commit()
+    conn.close()
+    ui.send_message("update_sound", {"mode": "naturalcrowd", "label": "Ambient normal", "timestamp": datetime.now(UTC).isoformat()})
+    print("Standard")
+
+def on_silence():
+    print(f"[AUDIO] silence detected at {datetime.now(UTC).isoformat()}")
+    global current_sound_mode
+    current_sound_mode = "silence"
+    conn = get_db()
+    conn.execute("INSERT INTO sound_readings (mode, label) VALUES (?, ?)", ("silence", "Silenci"))
+    conn.commit()
+    conn.close()
+    ui.send_message("update_sound", {"mode": "silence", "label": "Silenci", "timestamp": datetime.now(UTC).isoformat()})
+    print("Quiet...")
+
+def on_crowd():
+    print(f"[AUDIO] crowd detected at {datetime.now(UTC).isoformat()}")
+    global current_sound_mode
+    current_sound_mode = "crowd"
+    conn = get_db()
+    conn.execute("INSERT INTO sound_readings (mode, label) VALUES (?, ?)", ("crowd", "Multitud"))
+    conn.commit()
+    conn.close()
+    ui.send_message("update_sound", {"mode": "crowd", "label": "Multitud", "timestamp": datetime.now(UTC).isoformat()})
+    print("Probably a test :/")
 
 # --- API ENDPOINTS ---
 def api_events():
@@ -173,8 +215,9 @@ ui.expose_api("GET", "/api/stats", api_stats)
 # --- INIT ---
 init_db()
 classifier = AudioClassification()
-classifier.on_detect("squeak", lambda: print(f"SQUEAK!"))
-classifier.on_detect("naturalcrowd", lambda: print(f"Standard"))
-classifier.on_detect("silence", lambda: print(f"Quiet..."))
-classifier.on_detect("crowd", lambda: print(f"Porbably a test :/ñh,k"))
+classifier.on_detect("squeak", on_squeak)
+classifier.on_detect("naturalsqueak", on_squeak)
+classifier.on_detect("naturalcrowd", on_natural_crowd)
+classifier.on_detect("silence", on_silence)
+classifier.on_detect("crowd", on_crowd)
 App.run()

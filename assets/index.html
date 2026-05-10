@@ -49,9 +49,22 @@
                     </div>
                 </div>
 
-                <div class="container maps-card opacity-50">
-                    <h3 class="secondary-title">🔊 Nivell de Soroll</h3>
-                    <p class="feedback-text">Pendent de connectar el sensor...</p>
+                <!-- SOUND PANEL -->
+                <div class="container maps-card" id="sound-panel">
+                    <div class="maps-header">
+                        <div class="live-indicator" id="sound-indicator">
+                            <span class="pulse-dot" style="background-color:#1a73e8"></span>
+                            <span class="live-text" style="color:#1a73e8">EN DIRECTE</span>
+                        </div>
+                    </div>
+                    <h2 id="sound-status" class="status-text">Analitzant so...</h2>
+                    <div class="sound-mode-grid">
+                        <div class="sound-mode-box" id="mode-silence">🔇 Silenci</div>
+                        <div class="sound-mode-box" id="mode-naturalcrowd">🗣️ Ambient</div>
+                        <div class="sound-mode-box" id="mode-crowd">👥 Multitud</div>
+                        <div class="sound-mode-box" id="mode-squeak">📢 Soroll agut</div>
+                    </div>
+                    <p id="sound-time" class="time-update">Esperant dades...</p>
                 </div>
 
                 <!-- DB EVENTS PANEL -->
