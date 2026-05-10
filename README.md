@@ -59,6 +59,17 @@ Before running the frontend, ensure the following services are available:
 
 ---
 
+## How to Use the App
+
+1. Connect the USB-C hub to the UNO Q and the USB camera.
+  ![Hardware setup](assets/docs_assets/hardware-setup.png)
+2. Attach the external power supply to the USB-C hub to power everything.
+3. Run the App on Arduino App Lab.
+   ![Arduino App Lab - Run App](assets/docs_assets/launch-app.png)
+4. The App should open automatically in the web browser. You can open it manually via `<board-name>.local:7000`.
+
+---
+
 # 🛠️ Tech Stack
 
 | Layer | Technology |
