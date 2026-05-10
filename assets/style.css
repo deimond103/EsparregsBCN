@@ -726,7 +726,10 @@ body.dark {
     --xp-button-dark-shadow: #000;
     --xp-desktop: #1a1a2e;
     --xp-text: #e0e0e0;
-    background-color: #1a1a2e;
+    background-image: url("assets/bliss-dark.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 body.dark .container {
